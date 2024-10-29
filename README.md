@@ -31,6 +31,8 @@ AWS services for storage and authentication.
 
 ### Project Setup
 1. **Deploy Resources**: Follow the instructions in this [Medium article](https://medium.com/@miramnair/develop-and-deploy-a-serverless-rag-solution-with-amazon-bedrock-agents-knowledge-base-and-ef8a1818bc1e) by Meera Nair.
+  - We will be just using the knowledge base, so use the `cloudfromation` files in [build](./build) instead of the provided in [Medium article](https://medium.com/@miramnair/develop-and-deploy-a-serverless-rag-solution-with-amazon-bedrock-agents-knowledge-base-and-ef8a1818bc1e)
+  - The steps are the same
 
 2. **Environment Variables**: Set the following environment variables:
 
