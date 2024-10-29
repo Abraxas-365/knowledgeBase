@@ -28,8 +28,11 @@ AWS services for storage and authentication.
 - PostgreSQL
 - Google OAuth Credentials
 
-### Setup
-1. Environment Variables: Set the following environment variables:
+
+### Project Setup
+1. **Deploy Resources**: Follow the instructions in this [Medium article](https://medium.com/@miramnair/develop-and-deploy-a-serverless-rag-solution-with-amazon-bedrock-agents-knowledge-base-and-ef8a1818bc1e) by Meera Nair.
+
+2. **Environment Variables**: Set the following environment variables:
 
 ```
 KB_ID=KowledgeBaseId
@@ -45,13 +48,14 @@ DATABASE_URL= databsase uri
 ```
 [Env example](run.sh)
 
-2. Database Migration: Ensure your PostgreSQL database is set up and migrations are applied. [migrations](./migrations/)
+3. **Database Migration**: Ensure your PostgreSQL database is set up and migrations are applied. [migrations](./migrations/)
 
-3. Run without building:
+4. **Run without building**:
 ```bash
 sh run.sh
 ```
-4. You will need manualy change the db `user.is_admin` to `true` to the first admin user
+5.	`Initial Admin Setup`: Manually change the `user.is_admin` field to true for the first admin user in the database after oauth registration.
+
 ## API Endpoints
 ### Authentication
 - Login with Google: `/login/google`
