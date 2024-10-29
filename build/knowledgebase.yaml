@@ -1,0 +1,83 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: A CloudFormation template for creating a Knowledge Base with S3 as the data source and Embed Multilingual v3 as the embedding model.
+
+Parameters:
+  KnowledgeBaseName:
+    Type: String
+    Description: The name of the knowledge base.
+
+  KnowledgeBaseDescription:
+    Type: String
+    Description: The description of the knowledge base.
+
+  S3BucketName:
+    Type: String
+    Description: The name of the S3 bucket for the data source.
+
+Resources:
+  KnowledgeBaseIAMRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: "KnowledgeBaseRole"
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Principal:
+              Service: "bedrock.amazonaws.com"
+            Action: "sts:AssumeRole"
+      Policies:
+        - PolicyName: "KnowledgeBaseS3Access"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: "Allow"
+                Action:
+                  - "s3:GetObject"
+                  - "s3:PutObject"
+                  - "s3:ListBucket"
+                Resource:
+                  - !Sub "arn:aws:s3:::${S3BucketName}"
+                  - !Sub "arn:aws:s3:::${S3BucketName}/*"
+
+  S3Bucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Ref S3BucketName
+
+  VectorStore:
+    Type: AWS::OpenSearchServerless::Collection
+    Properties:
+      Name: !Sub "${KnowledgeBaseName}-VectorStore"
+      Type: "VECTOR"
+      Description: "Vector store for ${KnowledgeBaseName} knowledge base"
+      IndexSettings:
+        NumberOfShards: 1
+        NumberOfReplicas: 1
+
+  KnowledgeBaseWithS3:
+    Type: AWS::Bedrock::KnowledgeBase
+    Properties:
+      Name: !Ref KnowledgeBaseName
+      Description: !Ref KnowledgeBaseDescription
+      RoleArn: !GetAtt KnowledgeBaseIAMRole.Arn
+      KnowledgeBaseConfiguration:
+        Type: "VECTOR"
+        VectorKnowledgeBaseConfiguration:
+          EmbeddingModelArn: !Sub "arn:${AWS::Partition}:bedrock:${AWS::Region}::foundation-model/amazon.embed-multilingual-v3"
+          VectorStoreArn: !GetAtt VectorStore.Arn
+      StorageConfiguration:
+        Type: "S3"
+        S3Configuration:
+          BucketArn: !Sub "arn:aws:s3:::${S3BucketName}"
+
+  SampleDataSource:
+    Type: AWS::Bedrock::DataSource
+    Properties:
+      KnowledgeBaseId: !Ref KnowledgeBaseWithS3
+      Name: "SampleDataSource"
+      Description: "Sample data source for knowledge base"
+      DataSourceConfiguration:
+        Type: "S3"
+        S3Configuration:
+          BucketArn: !Sub "arn:aws:s3:::${S3BucketName}"
