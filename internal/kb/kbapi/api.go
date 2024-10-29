@@ -107,5 +107,37 @@ func SetupRoutes(app *fiber.App, service *kbsrv.Service, authMiddleware *lucia.A
 
 		return c.JSON(fiber.Map{"message": "Object deleted successfully"})
 	})
-}
 
+	// Endpoint to start the ingestion job for syncing knowledge base
+	app.Post("/sync-knowledge-base", authMiddleware.RequireAuth(), func(c *fiber.Ctx) error {
+		output, err := service.SyncKnowledgeBase(context.TODO())
+		if err != nil {
+			return err
+		}
+		return c.JSON(output)
+	})
+
+	// TODO: Implement the logic to get the status of the ingestion job
+	// Endpoint to get the status of the ingestion job
+	//
+	//	app.Get("/ingestion-job-status", authMiddleware.RequireAuth(), func(c *fiber.Ctx) error {
+	//		type Request struct {
+	//			IngestionJobId string `query:"ingestionJobId"`
+	//		}
+	//
+	//		var req Request
+	//		if err := c.QueryParser(&req); err != nil {
+	//			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid query parameters"})
+	//		}
+	//
+	//		// Implement call to check the ingestion job status using service.GetIngestionJobStatus (to be created in Service)
+	//		status, err := service.GetIngestionJobStatus(req.IngestionJobId)
+	//		if err != nil {
+	//			return err
+	//		}
+	//
+	//		return c.JSON(fiber.Map{
+	//			"status": status,
+	//		})
+	//	})
+}
