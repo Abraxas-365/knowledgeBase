@@ -18,6 +18,7 @@ AWS services for storage and authentication.
 - Knowledge Base Management: Admins can upload and delete knowledge base data.
 - User Queries: Users can query the knowledge base with rate limiting applied per IP address.
 - OAuth Authentication: Google OAuth is used for secure user login and session management.
+- Session Management: Secure cookies are used for session management.
 
 # Getting Started
 ### Prerequisites
@@ -53,20 +54,21 @@ sh run.sh
 4. You will need manualy change the db `user.is_admin` to `true` to the first admin user
 ## API Endpoints
 ### Authentication
-	•	Login with Google: `/login/google`
-	•	Google Callback: `/login/google/callback`
-	•	Logout: `/logout`
+- Login with Google: `/login/google`
+- Google Callback: `/login/google/callback`
+- Logout: `/logout`
 ### Knowledge Base
-	•	Upload Data: `/generate-presigned-url` (POST)
-	•	List Objects: `/list-objects` (GET)
-	•	Delete Object: `/delete-object` (DELETE)
-	•	Query: `/chat/complete-answer` (POST)
+- Upload Data: `/generate-presigned-url` (POST)
+- List Objects: `/list-objects` (GET)
+- Delete Object: `/delete-object` (DELETE)
+- Query: `/chat/complete-answer` (POST)
 ### User Management
-	•	List Users: `/users` (GET)
-	•	Promote to Admin: `/users/promote-to-admin` (POST)
-	•	Delete User: `/users/:id` (DELETE)
-	•	Blacklist Management: `/users/blacklist` (GET, POST, DELETE)
+- List Users: `/users` (GET)
+- Promote to Admin: `/users/promote-to-admin` (POST)
+- Delete User: `/users/:id` (DELETE)
+- Blacklist Management: `/users/blacklist` (GET, POST, DELETE)
 
 ## Security
-	•	Rate Limiting: Implemented to restrict the number of requests per IP address to prevent abuse.
-	•	OAuth: Secures user authentication and session management.
+- Rate Limiting: Implemented to restrict the number of requests per IP address to prevent abuse.
+- OAuth: Secures user authentication and session management.
+- Cookie: Uses secure cookies for session management.
