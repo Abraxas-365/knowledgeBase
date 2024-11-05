@@ -41,12 +41,14 @@ KB_ID=KowledgeBaseId
 KB_MODEL_ID=knowledgebase llm model
 KB_NUMBER_OF_RESULTS=number of results for the knowledge base
 KB_MODEL_PROMPT=prompt for the model, use aws guide to create the prompt
-export KB_REGION= knowledge base region
+KB_REGION= knowledge base region
+KB_S3_DATA_SOURCE=knowledgebase data source id
 
 GOOGLE_CLIENT_ID=google client id
 GOOGLE_CLIENT_SECRET=google secret id
 GOOGLE_REDIRECT_URI=redirect url
 DATABASE_URL= databsase uri
+
 ```
 [Env example](run.sh)
 

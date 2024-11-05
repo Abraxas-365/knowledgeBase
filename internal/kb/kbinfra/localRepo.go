@@ -45,10 +45,16 @@ func (lc *LocalConfig) GetKnowlegeBaseConfig() (*kb.KnowlegeBaseConfig, error) {
 		return nil, errors.ErrUnexpected("KB_MODEL_PROMPT is not set")
 	}
 
+	s3DataSource := os.Getenv("KB_S3_DATA_SOURCE")
+	if s3DataSource == "" {
+		return nil, errors.ErrUnexpected("KB_S3_DATA_SOURCE is not set")
+	}
+
 	return &kb.KnowlegeBaseConfig{
 		ID:              id,
 		NumberOfResults: numberOfResultsInt,
 		Region:          region,
+		S3DataSurce:     s3DataSource,
 		Model: kb.ModelInformation{
 			ModelId: modelId,
 			Prompt:  modelPrompt,

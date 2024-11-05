@@ -1,6 +1,7 @@
 export KB_ID="ACZGQIK2WM"
 export KB_MODEL_ID="arn:aws:bedrock:us-east-1::foundation-model/amazon.titan-text-premier-v1:0"
 export KB_NUMBER_OF_RESULTS=5
+export KB_S3_DATA_SOURCE="7GX4YJAE0D"
 export KB_MODEL_PROMPT="A chat between a curious User and an artificial intelligence Bot. The Bot gives helpful, detailed, and polite answers to the User's questions.
 
 In this session, the model has access to search results and a user's question, your job is to answer the user's question using only information from the search results.
