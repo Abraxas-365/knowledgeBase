@@ -19,6 +19,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/bedrockagentruntime"
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/jmoiron/sqlx"
 )
 
@@ -66,6 +67,11 @@ func main() {
 	}
 	kbSerive := kbsrv.New(client, repo, s3client)
 	app := fiber.New()
+
+	// Add CORS middleware
+	app.Use(cors.New(cors.Config{
+		AllowOrigins: "*", // Allow all origins
+	}))
 
 	authMiddleware := lucia.NewAuthMiddleware(authSrv)
 	app.Use(authMiddleware.SessionMiddleware())
@@ -127,5 +133,4 @@ func main() {
 
 	// Start server
 	app.Listen(":3000")
-
 }
