@@ -70,7 +70,10 @@ func main() {
 
 	// Add CORS middleware
 	app.Use(cors.New(cors.Config{
-		AllowOrigins: "*", // Allow all origins
+		AllowOrigins:     "http://localhost:3000,http://localhost:5173",
+		AllowCredentials: true, // Important for cookies/auth
+		AllowHeaders:     "Origin, Content-Type, Accept, Authorization",
+		AllowMethods:     "GET,POST,HEAD,PUT,DELETE,PATCH",
 	}))
 
 	authMiddleware := lucia.NewAuthMiddleware(authSrv)
