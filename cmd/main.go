@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"strings"
 
@@ -66,18 +67,18 @@ func main() {
 		panic(err)
 	}
 	kbSerive := kbsrv.New(client, repo, s3client)
+
 	app := fiber.New()
+	authMiddleware := lucia.NewAuthMiddleware(authSrv)
+	app.Use(authMiddleware.SessionMiddleware())
 
 	// Add CORS middleware
 	app.Use(cors.New(cors.Config{
-		AllowOrigins:     "http://localhost:3000,http://localhost:5173",
-		AllowCredentials: true, // Important for cookies/auth
+		AllowOrigins:     "http://localhost:3001, http://localhost:3000",
+		AllowCredentials: true,
 		AllowHeaders:     "Origin, Content-Type, Accept, Authorization",
-		AllowMethods:     "GET,POST,HEAD,PUT,DELETE,PATCH",
+		AllowMethods:     "GET,POST,HEAD,PUT,DELETE,PATCH,OPTIONS",
 	}))
-
-	authMiddleware := lucia.NewAuthMiddleware(authSrv)
-	app.Use(authMiddleware.SessionMiddleware())
 
 	kbapi.SetupRoutes(app, kbSerive, authMiddleware)
 	userapi.SetupRoutes(app, userSrv, authMiddleware)
@@ -117,10 +118,14 @@ func main() {
 		lucia.SetSessionCookie(c, session)
 
 		// Return session ID in JSON response for the frontend to access
-		return c.JSON(fiber.Map{
+		res := c.JSON(fiber.Map{
 			"session_id": session.ID, // Assuming session has an ID field
 			"message":    "Login successful",
 		})
+
+		fmt.Println(res)
+
+		return c.Redirect("http://localhost:3001")
 	})
 	// Logout route
 	app.Post("/logout", func(c *fiber.Ctx) error {

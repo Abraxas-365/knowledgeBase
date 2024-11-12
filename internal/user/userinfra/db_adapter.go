@@ -14,6 +14,15 @@ type PostgresStore struct {
 	db *sqlx.DB
 }
 
+func (s *PostgresStore) GetUserByID(ctx context.Context, userID string) (*user.User, error) {
+	var u user.User
+	err := s.db.GetContext(ctx, &u, "SELECT * FROM \"user\" WHERE id = $1", userID)
+	if err != nil {
+		return nil, err
+	}
+	return &u, nil
+}
+
 // NewUserStore creates a new PostgresStore for user repository
 func NewUserStore(db *sqlx.DB) *PostgresStore {
 	return &PostgresStore{db: db}

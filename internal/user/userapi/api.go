@@ -2,6 +2,8 @@ package userapi
 
 import (
 	"context"
+	"fmt"
+	"log"
 
 	"github.com/Abraxas-365/opd/internal/user"
 	"github.com/Abraxas-365/opd/internal/user/usersrv"
@@ -11,6 +13,30 @@ import (
 
 // SetupRoutes sets up the API routes for the user service
 func SetupRoutes(app *fiber.App, service *usersrv.Service, authMiddleware *lucia.AuthMiddleware[*user.User]) {
+
+	app.Get("/users/me", authMiddleware.RequireAuth(), func(c *fiber.Ctx) error {
+		log.Println("Accessing /users/me endpoint")
+		log.Printf("Request headers: %+v", c.GetReqHeaders())
+
+		authUser, ok := c.Locals("user").(*user.User)
+		if !ok {
+			log.Println("Failed to get user from context")
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "User not authenticated"})
+		}
+		log.Printf("Authenticated user ID: %s", authUser.ID)
+
+		user, err := service.GetUser(c.Context(), authUser.ID)
+		if err != nil {
+			log.Printf("Error fetching user details: %v", err)
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": fmt.Sprintf("Failed to fetch user details: %v", err)})
+		}
+
+		log.Println("Successfully fetched user details")
+		log.Printf("User details: %+v", user)
+
+		return c.JSON(user)
+	})
+
 	app.Get("/users", authMiddleware.RequireAuth(), func(c *fiber.Ctx) error {
 		page, pageSize := 1, 10 // Default values
 		pageParam := c.Query("page")

@@ -19,4 +19,5 @@ type Repository interface {
 	RemoveFromBlacklist(ctx context.Context, email string) error
 	IsInBlacklist(ctx context.Context, email string) (bool, error)
 	PromoteUserToAdmin(ctx context.Context, userID string) error
+	GetUserByID(ctx context.Context, userID string) (*User, error)
 }
