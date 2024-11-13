@@ -2,8 +2,10 @@ package kbsrv
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/Abraxas-365/opd/internal/kb"
+	"github.com/Abraxas-365/toolkit/pkg/database"
 	"github.com/Abraxas-365/toolkit/pkg/errors"
 	"github.com/Abraxas-365/toolkit/pkg/s3client"
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -11,6 +13,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/bedrockagentruntime/types"
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/service/bedrockagent"
+	"github.com/google/uuid"
 )
 
 type Service struct {
@@ -68,12 +71,32 @@ func (s *Service) CompleteAnswerWithMetadata(ctx context.Context, userMessage st
 
 }
 
-func (s *Service) GeneratePutURL(key string) (string, error) {
+func (s *Service) GeneratePutURL(file string) (string, error) {
+	key := fmt.Sprintf("data/%s-%s", uuid.New().String(), file)
+	dataFile := kb.DataFile{
+		Filename: file,
+		S3Key:    key,
+		UserID:   "",
+	}
+	_, err := s.repo.SaveData(context.Background(), dataFile)
+	if err != nil {
+		return "", err
+	}
+
 	return s.s3Client.GeneratePresignedPutURL(key, 60)
 }
 
-func (s *Service) DeleteObject(key string) error {
-	return s.s3Client.DeleteFile(key)
+func (s *Service) GetFiles(ctx context.Context, page, pageSize int) (database.PaginatedRecord[kb.DataFile], error) {
+	return s.repo.GetData(ctx, page, pageSize)
+}
+
+func (s *Service) DeleteObject(fileID int) error {
+	file, err := s.repo.GetDataById(context.Background(), fileID)
+	if err != nil {
+		return err
+	}
+	return s.s3Client.DeleteFile(file.S3Key)
+
 }
 
 func (s *Service) LisObjects(pageSize int32, continuationToken *string) ([]string, *string, error) {

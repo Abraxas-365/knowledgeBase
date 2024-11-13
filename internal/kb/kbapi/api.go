@@ -2,10 +2,12 @@ package kbapi
 
 import (
 	"context"
+	"strconv"
 	"time"
 
 	kbsrv "github.com/Abraxas-365/opd/internal/kb/kbasesrv"
 	"github.com/Abraxas-365/opd/internal/user"
+	"github.com/Abraxas-365/toolkit/pkg/errors"
 	"github.com/Abraxas-365/toolkit/pkg/lucia"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/limiter"
@@ -90,18 +92,17 @@ func SetupRoutes(app *fiber.App, service *kbsrv.Service, authMiddleware *lucia.A
 		})
 	})
 
-	// Route to delete an object
-	app.Delete("/delete-object", authMiddleware.RequireAuth(), func(c *fiber.Ctx) error {
-		type Request struct {
-			Key string `json:"key"`
+	app.Delete("/objects/:id", authMiddleware.RequireAuth(), func(c *fiber.Ctx) error {
+		// Get file id from path parameter
+		fileId := c.Params("id")
+
+		// Convert string to int
+		id, err := strconv.Atoi(fileId)
+		if err != nil {
+			return errors.ErrBadRequest("File id must be a number")
 		}
 
-		var req Request
-		if err := c.BodyParser(&req); err != nil {
-			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid request body"})
-		}
-
-		if err := service.DeleteObject(req.Key); err != nil {
+		if err := service.DeleteObject(id); err != nil {
 			return err
 		}
 
@@ -115,6 +116,26 @@ func SetupRoutes(app *fiber.App, service *kbsrv.Service, authMiddleware *lucia.A
 			return err
 		}
 		return c.JSON(output)
+	})
+	app.Get("/objects", authMiddleware.RequireAuth(), func(c *fiber.Ctx) error {
+		// Get page and page size from query parameters
+		page, err := strconv.Atoi(c.Query("page", "1"))
+		if err != nil || page < 1 {
+			return errors.ErrBadRequest("Invalid page number")
+		}
+
+		pageSize, err := strconv.Atoi(c.Query("pageSize", "10"))
+		if err != nil || pageSize < 1 {
+			return errors.ErrBadRequest("Invalid page size")
+		}
+
+		// Get paginated data from service
+		paginatedData, err := service.GetFiles(c.Context(), page, pageSize)
+		if err != nil {
+			return err
+		}
+
+		return c.JSON(paginatedData)
 	})
 
 	// TODO: Implement the logic to get the status of the ingestion job
