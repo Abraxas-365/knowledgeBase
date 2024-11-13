@@ -76,7 +76,7 @@ func (s *Service) GeneratePutURL(userID string, file string) (string, error) {
 	dataFile := kb.DataFile{
 		Filename: file,
 		S3Key:    key,
-		UserID:   "",
+		UserID:   userID,
 	}
 	_, err := s.repo.SaveData(context.Background(), dataFile)
 	if err != nil {
