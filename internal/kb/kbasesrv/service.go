@@ -3,6 +3,7 @@ package kbsrv
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/Abraxas-365/opd/internal/kb"
 	"github.com/Abraxas-365/toolkit/pkg/database"
@@ -83,7 +84,7 @@ func (s *Service) GeneratePutURL(userID string, file string) (string, error) {
 		return "", err
 	}
 
-	return s.s3Client.GeneratePresignedPutURL(key, 60)
+	return s.s3Client.GeneratePresignedPutURL(key, 60*time.Second)
 }
 
 func (s *Service) GetFiles(ctx context.Context, page, pageSize int) (database.PaginatedRecord[kb.DataFile], error) {
