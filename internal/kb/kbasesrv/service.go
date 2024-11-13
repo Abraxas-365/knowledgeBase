@@ -71,7 +71,7 @@ func (s *Service) CompleteAnswerWithMetadata(ctx context.Context, userMessage st
 
 }
 
-func (s *Service) GeneratePutURL(file string) (string, error) {
+func (s *Service) GeneratePutURL(userID string, file string) (string, error) {
 	key := fmt.Sprintf("data/%s-%s", uuid.New().String(), file)
 	dataFile := kb.DataFile{
 		Filename: file,

@@ -50,13 +50,18 @@ func SetupRoutes(app *fiber.App, service *kbsrv.Service, authMiddleware *lucia.A
 		type Request struct {
 			FileName string `json:"fileName"`
 		}
+		session := lucia.GetSession(c)
+		userID, err := session.UserIDToString()
+		if err != nil {
+			return err
+		}
 
 		var req Request
 		if err := c.BodyParser(&req); err != nil {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid request body"})
 		}
 
-		url, err := service.GeneratePutURL(req.FileName)
+		url, err := service.GeneratePutURL(userID, req.FileName)
 		if err != nil {
 			return err
 		}
