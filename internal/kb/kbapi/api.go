@@ -48,7 +48,7 @@ func SetupRoutes(app *fiber.App, service *kbsrv.Service, authMiddleware *lucia.A
 	// Route to generate a presigned PUT URL
 	app.Post("/generate-presigned-url", authMiddleware.RequireAuth(), func(c *fiber.Ctx) error {
 		type Request struct {
-			Key string `json:"key"`
+			FileName string `json:"fileName"`
 		}
 
 		var req Request
@@ -56,7 +56,7 @@ func SetupRoutes(app *fiber.App, service *kbsrv.Service, authMiddleware *lucia.A
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid request body"})
 		}
 
-		url, err := service.GeneratePutURL(req.Key)
+		url, err := service.GeneratePutURL(req.FileName)
 		if err != nil {
 			return err
 		}
