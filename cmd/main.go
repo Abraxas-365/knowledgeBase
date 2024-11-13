@@ -62,7 +62,7 @@ func main() {
 	client := bedrockagentruntime.NewFromConfig(cfg)
 
 	repo := kbinfra.NewLocalConfig()
-	s3client, err := s3client.NewS3Client("test")
+	s3client, err := s3client.NewS3Client("vendy", s3client.WithRegion("us-east-1"))
 	if err != nil {
 		panic(err)
 	}

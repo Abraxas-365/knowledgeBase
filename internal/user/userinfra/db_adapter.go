@@ -16,7 +16,9 @@ type PostgresStore struct {
 
 func (s *PostgresStore) GetUserByID(ctx context.Context, userID string) (*user.User, error) {
 	var u user.User
-	err := s.db.GetContext(ctx, &u, "SELECT * FROM \"user\" WHERE id = $1", userID)
+
+	query := `SELECT id, email, is_admin, provider, provider_id FROM "user" WHERE id = $1`
+	err := s.db.GetContext(ctx, &u, query, userID)
 	if err != nil {
 		return nil, err
 	}

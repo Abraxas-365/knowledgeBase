@@ -18,14 +18,10 @@ func SetupRoutes(app *fiber.App, service *usersrv.Service, authMiddleware *lucia
 		log.Println("Accessing /users/me endpoint")
 		log.Printf("Request headers: %+v", c.GetReqHeaders())
 
-		authUser, ok := c.Locals("user").(*user.User)
-		if !ok {
-			log.Println("Failed to get user from context")
-			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "User not authenticated"})
-		}
-		log.Printf("Authenticated user ID: %s", authUser.ID)
-
-		user, err := service.GetUser(c.Context(), authUser.ID)
+		session := lucia.GetSession(c)
+		userID, err := session.UserIDToString()
+		log.Printf("Authenticated user ID: %s", session.ID)
+		user, err := service.GetUser(c.Context(), userID)
 		if err != nil {
 			log.Printf("Error fetching user details: %v", err)
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": fmt.Sprintf("Failed to fetch user details: %v", err)})
