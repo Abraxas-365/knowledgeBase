@@ -2,7 +2,6 @@ package usersrv
 
 import (
 	"context"
-	"log"
 
 	"github.com/Abraxas-365/opd/internal/user"
 	"github.com/Abraxas-365/toolkit/pkg/database"
@@ -21,17 +20,11 @@ func NewService(repo user.Repository) *Service {
 }
 
 func (s *Service) GetUser(ctx context.Context, userID string) (*user.User, error) {
-	log.Printf("Fetching user with ID: %s", userID)
 	u, err := s.repo.GetUserByID(ctx, userID)
 	if err != nil {
-		if errors.IsNotFound(err) {
-			log.Printf("User with ID %s not found", userID)
-			return nil, errors.ErrNotFound("user not found")
-		}
-		log.Printf("Database error fetching user by ID %s: %v", userID, err)
+		return nil, err
 	}
 
-	log.Printf("Successfully fetched user: %+v", u)
 	return u, nil
 }
 
@@ -40,15 +33,22 @@ func (s *Service) GetUserByProviderID(ctx context.Context, provider, providerID 
 	if err != nil {
 		return nil, err
 	}
-	log.Printf("User: %v", u)
+
+	isInWhiteList, err := s.repo.IsInWhitelist(ctx, u.Email)
+	if err != nil {
+		return nil, err
+	} else if !isInWhiteList {
+		return nil, errors.ErrUnauthorized("email is blacklisted")
+	}
+
 	return u, nil
 }
 
 func (s *Service) CreateUser(ctx context.Context, userInfo *lucia.UserInfo) (*user.User, error) {
-	isInBlacklisted, err := s.repo.IsInBlacklist(ctx, userInfo.Email)
+	isInWhiteList, err := s.repo.IsInWhitelist(ctx, userInfo.Email)
 	if err != nil {
 		return nil, err
-	} else if isInBlacklisted {
+	} else if !isInWhiteList {
 		return nil, errors.ErrUnauthorized("email is blacklisted")
 	}
 
@@ -88,14 +88,14 @@ func (s *Service) DeleteUser(ctx context.Context, userID string) error {
 	return s.repo.DeleteUser(ctx, userID)
 }
 
-func (s *Service) GetBlacklist(ctx context.Context) ([]string, error) {
-	return s.repo.GetBlacklist(ctx)
+func (s *Service) GetWhitelist(ctx context.Context) ([]string, error) {
+	return s.repo.GetWhitelist(ctx)
 }
 
-func (s *Service) AddToBlacklist(ctx context.Context, email string) error {
-	return s.repo.AddToBlacklist(ctx, email)
+func (s *Service) AddToWhitelist(ctx context.Context, email string) error {
+	return s.repo.AddToWhitelist(ctx, email)
 }
 
-func (s *Service) RemoveFromBlacklist(ctx context.Context, email string) error {
-	return s.repo.RemoveFromBlacklist(ctx, email)
+func (s *Service) RemoveFromWhitelist(ctx context.Context, email string) error {
+	return s.repo.RemoveFromWhitelist(ctx, email)
 }

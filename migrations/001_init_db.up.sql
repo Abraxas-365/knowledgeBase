@@ -17,7 +17,7 @@ CREATE TABLE sessions (
 );
 
 
-CREATE TABLE email_blacklist (
+CREATE TABLE email_whitelist (
     email TEXT PRIMARY KEY,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );

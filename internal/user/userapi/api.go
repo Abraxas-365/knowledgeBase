@@ -117,8 +117,8 @@ func SetupRoutes(app *fiber.App, service *usersrv.Service, authMiddleware *lucia
 		return c.SendStatus(fiber.StatusNoContent)
 	})
 
-	app.Get("/users/blacklist", authMiddleware.RequireAuth(), func(c *fiber.Ctx) error {
-		blacklist, err := service.GetBlacklist(context.TODO())
+	app.Get("/users/whitelist", authMiddleware.RequireAuth(), func(c *fiber.Ctx) error {
+		blacklist, err := service.GetWhitelist(context.TODO())
 		if err != nil {
 			return err
 		}
@@ -126,7 +126,7 @@ func SetupRoutes(app *fiber.App, service *usersrv.Service, authMiddleware *lucia
 		return c.JSON(blacklist)
 	})
 
-	app.Post("/users/blacklist", authMiddleware.RequireAuth(), func(c *fiber.Ctx) error {
+	app.Post("/users/whitelist", authMiddleware.RequireAuth(), func(c *fiber.Ctx) error {
 		type Request struct {
 			Email string `json:"email"`
 		}
@@ -136,7 +136,7 @@ func SetupRoutes(app *fiber.App, service *usersrv.Service, authMiddleware *lucia
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid request body"})
 		}
 
-		err := service.AddToBlacklist(context.TODO(), req.Email)
+		err := service.AddToWhitelist(context.TODO(), req.Email)
 		if err != nil {
 			return err
 		}
@@ -144,7 +144,7 @@ func SetupRoutes(app *fiber.App, service *usersrv.Service, authMiddleware *lucia
 		return c.SendStatus(fiber.StatusOK)
 	})
 
-	app.Delete("/users/blacklist", authMiddleware.RequireAuth(), func(c *fiber.Ctx) error {
+	app.Delete("/users/whitelist", authMiddleware.RequireAuth(), func(c *fiber.Ctx) error {
 		type Request struct {
 			Email string `json:"email"`
 		}
@@ -154,7 +154,7 @@ func SetupRoutes(app *fiber.App, service *usersrv.Service, authMiddleware *lucia
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid request body"})
 		}
 
-		err := service.RemoveFromBlacklist(context.TODO(), req.Email)
+		err := service.RemoveFromWhitelist(context.TODO(), req.Email)
 		if err != nil {
 			return err
 		}

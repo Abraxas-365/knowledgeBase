@@ -141,48 +141,48 @@ func (s *PostgresStore) DeleteUser(ctx context.Context, userID string) error {
 	return nil
 }
 
-// GetBlacklist retrieves all blacklisted emails
-func (s *PostgresStore) GetBlacklist(ctx context.Context) ([]string, error) {
-	query := `SELECT email FROM email_blacklist`
-	var blacklist []string
-	err := s.db.SelectContext(ctx, &blacklist, query)
+// GetWhitelist retrieves all whitelisted emails
+func (s *PostgresStore) GetWhitelist(ctx context.Context) ([]string, error) {
+	query := `SELECT email FROM email_whitelist`
+	var whitelist []string
+	err := s.db.SelectContext(ctx, &whitelist, query)
 	if err != nil {
-		return nil, errors.ErrDatabase(fmt.Sprintf("Failed to get blacklist: %v", err))
+		return nil, errors.ErrDatabase(fmt.Sprintf("Failed to get whitelist: %v", err))
 	}
-	return blacklist, nil
+	return whitelist, nil
 }
 
-// AddToBlacklist adds an email to the blacklist
-func (s *PostgresStore) AddToBlacklist(ctx context.Context, email string) error {
-	query := `INSERT INTO email_blacklist (email) VALUES ($1)`
+// AddToWhitelist adds an email to the whitelist
+func (s *PostgresStore) AddToWhitelist(ctx context.Context, email string) error {
+	query := `INSERT INTO email_whitelist (email) VALUES ($1)`
 	_, err := s.db.ExecContext(ctx, query, email)
 	if err != nil {
-		return errors.ErrDatabase(fmt.Sprintf("Failed to add to blacklist: %v", err))
+		return errors.ErrDatabase(fmt.Sprintf("Failed to add to whitelist: %v", err))
 	}
 	return nil
 }
 
-// RemoveFromBlacklist removes an email from the blacklist
-func (s *PostgresStore) RemoveFromBlacklist(ctx context.Context, email string) error {
-	query := `DELETE FROM email_blacklist WHERE email = $1`
+// RemoveFromWhitelist removes an email from the whitelist
+func (s *PostgresStore) RemoveFromWhitelist(ctx context.Context, email string) error {
+	query := `DELETE FROM email_whitelist WHERE email = $1`
 	result, err := s.db.ExecContext(ctx, query, email)
 	if err != nil {
-		return errors.ErrDatabase(fmt.Sprintf("Failed to remove from blacklist: %v", err))
+		return errors.ErrDatabase(fmt.Sprintf("Failed to remove from whitelist: %v", err))
 	}
 	rowsAffected, _ := result.RowsAffected()
 	if rowsAffected == 0 {
-		return errors.ErrNotFound("Email not found in blacklist")
+		return errors.ErrNotFound("Email not found in whitelist")
 	}
 	return nil
 }
 
-// IsInBlacklist checks if an email is in the blacklist
-func (s *PostgresStore) IsInBlacklist(ctx context.Context, email string) (bool, error) {
-	query := `SELECT EXISTS (SELECT 1 FROM email_blacklist WHERE email = $1)`
+// IsInWhite checks if an email is in the whitelist
+func (s *PostgresStore) IsInWhitelist(ctx context.Context, email string) (bool, error) {
+	query := `SELECT EXISTS (SELECT 1 FROM email_whitelist WHERE email = $1)`
 	var exists bool
 	err := s.db.GetContext(ctx, &exists, query, email)
 	if err != nil {
-		return false, errors.ErrDatabase(fmt.Sprintf("Failed to check blacklist: %v", err))
+		return false, errors.ErrDatabase(fmt.Sprintf("Failed to check whitelist: %v", err))
 	}
 	return exists, nil
 }

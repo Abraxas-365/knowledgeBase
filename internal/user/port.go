@@ -14,10 +14,10 @@ type Repository interface {
 	GetUsersAdminRole(ctx context.Context, page, pageSize int) (database.PaginatedRecord[User], error)
 	UpdateUser(ctx context.Context, user *User) (*User, error)
 	DeleteUser(ctx context.Context, userID string) error
-	GetBlacklist(ctx context.Context) ([]string, error)
-	AddToBlacklist(ctx context.Context, email string) error
-	RemoveFromBlacklist(ctx context.Context, email string) error
-	IsInBlacklist(ctx context.Context, email string) (bool, error)
+	GetWhitelist(ctx context.Context) ([]string, error)
+	AddToWhitelist(ctx context.Context, email string) error
+	RemoveFromWhitelist(ctx context.Context, email string) error
+	IsInWhitelist(ctx context.Context, email string) (bool, error)
 	PromoteUserToAdmin(ctx context.Context, userID string) error
 	GetUserByID(ctx context.Context, userID string) (*User, error)
 }
