@@ -17,8 +17,10 @@ type PostgresStore struct {
 	db *sqlx.DB
 }
 
-func NewStore() *PostgresStore {
-	return &PostgresStore{}
+func NewStore(db *sqlx.DB) *PostgresStore {
+	return &PostgresStore{
+		db,
+	}
 }
 
 func (lc *PostgresStore) GetKnowlegeBaseConfig() (*kb.KnowlegeBaseConfig, error) {
