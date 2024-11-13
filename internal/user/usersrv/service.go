@@ -20,6 +20,21 @@ func NewService(repo user.Repository) *Service {
 	}
 }
 
+func (s *Service) GetUser(ctx context.Context, userID string) (*user.User, error) {
+	log.Printf("Fetching user with ID: %s", userID)
+	u, err := s.repo.GetUserByID(ctx, userID)
+	if err != nil {
+		if errors.IsNotFound(err) {
+			log.Printf("User with ID %s not found", userID)
+			return nil, errors.ErrNotFound("user not found")
+		}
+		log.Printf("Database error fetching user by ID %s: %v", userID, err)
+	}
+
+	log.Printf("Successfully fetched user: %+v", u)
+	return u, nil
+}
+
 func (s *Service) GetUserByProviderID(ctx context.Context, provider, providerID string) (*user.User, error) {
 	u, err := s.repo.GetUserByProviderID(ctx, provider, providerID)
 	if err != nil {
