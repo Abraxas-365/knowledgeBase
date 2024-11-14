@@ -59,6 +59,14 @@ func (s *Service) CompleteAnswerWithMetadata(ctx context.Context, userMessage st
 						PromptTemplate: &types.PromptTemplate{
 							TextPromptTemplate: aws.String(kbConf.Model.Prompt),
 						},
+						InferenceConfig: &types.InferenceConfig{
+							TextInferenceConfig: &types.TextInferenceConfig{
+								Temperature:   aws.Float32(0),
+								TopP:          aws.Float32(1),
+								MaxTokens:     aws.Int32(2048),
+								StopSequences: []string{"\nObservation"},
+							},
+						},
 					},
 				},
 			},
