@@ -117,7 +117,6 @@ func SetupRoutes(app *fiber.App, service *kbsrv.Service, authMiddleware *lucia.A
 
 	// Endpoint to start the ingestion job for syncing knowledge base
 	app.Post("/sync-knowledge-base", func(c *fiber.Ctx) error {
-		fmt.Println("sync-knowledge-base")
 		output, err := service.SyncKnowledgeBase(context.TODO())
 		if err != nil {
 			return err
