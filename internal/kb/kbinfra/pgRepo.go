@@ -74,7 +74,7 @@ func (lc *PostgresStore) GetKnowlegeBaseConfig() (*kb.KnowlegeBaseConfig, error)
 func (lc *PostgresStore) SaveData(ctx context.Context, data kb.DataFile) (*kb.DataFile, error) {
 	query := `
         INSERT INTO files (filename, s3_key, user_id, user_email)
-        VALUES ($1, $2, $3)
+        VALUES ($1, $2, $3, $4)
         RETURNING id, filename, s3_key, user_id, user_email`
 
 	var savedFile kb.DataFile
