@@ -75,7 +75,7 @@ func main() {
 	})))
 
 	// Then modify the kbService initialization to include the brClient:
-	kbSerive := kbsrv.New(client, brClient, repo, s3client)
+	kbSerive := kbsrv.New(client, brClient, repo, s3client, *userSrv)
 
 	app := fiber.New()
 	authMiddleware := lucia.NewAuthMiddleware(authSrv)
