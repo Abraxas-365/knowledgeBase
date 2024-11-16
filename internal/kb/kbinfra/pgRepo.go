@@ -73,7 +73,7 @@ func (lc *PostgresStore) GetKnowlegeBaseConfig() (*kb.KnowlegeBaseConfig, error)
 
 func (lc *PostgresStore) SaveData(ctx context.Context, data kb.DataFile) (*kb.DataFile, error) {
 	query := `
-        INSERT INTO files (filename, s3_key, user_id)
+        INSERT INTO files (filename, s3_key, user_id, user_email)
         VALUES ($1, $2, $3)
         RETURNING id, filename, s3_key, user_id`
 
@@ -85,6 +85,7 @@ func (lc *PostgresStore) SaveData(ctx context.Context, data kb.DataFile) (*kb.Da
 		data.Filename,
 		data.S3Key,
 		data.UserID,
+		data.UserEmail,
 	).StructScan(&savedFile)
 
 	if err != nil {
@@ -98,7 +99,7 @@ func (lc *PostgresStore) DeleteData(ctx context.Context, dataId int) (*kb.DataFi
 	query := `
         DELETE FROM files 
         WHERE id = $1
-        RETURNING id, filename, s3_key, user_id`
+        RETURNING id, filename, s3_key, user_id, user_email`
 
 	var deletedFile kb.DataFile
 
@@ -158,7 +159,7 @@ func (lc *PostgresStore) GetData(ctx context.Context, page, pageSize int) (datab
 
 func (lc *PostgresStore) GetDataById(ctx context.Context, id int) (*kb.DataFile, error) {
 	query := `
-        SELECT id, filename, s3_key, user_id 
+        SELECT id, filename, s3_key, user_id ,user_email
         FROM files 
         WHERE id = $1`
 
