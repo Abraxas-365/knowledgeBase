@@ -131,7 +131,7 @@ func (lc *PostgresStore) GetData(ctx context.Context, page, pageSize int) (datab
 	offset := (page - 1) * pageSize
 
 	query := `
-        SELECT id, filename, s3_key, user_id 
+        SELECT id, filename, s3_key, user_id , user_email
         FROM files 
         ORDER BY id DESC
         LIMIT $1 OFFSET $2`

@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/Abraxas-365/opd/internal/kb"
+	"github.com/Abraxas-365/opd/internal/user/usersrv"
 	"github.com/Abraxas-365/toolkit/pkg/database"
 	"github.com/Abraxas-365/toolkit/pkg/errors"
 	"github.com/Abraxas-365/toolkit/pkg/s3client"
@@ -18,10 +19,11 @@ import (
 )
 
 type Service struct {
-	kbClient *bedrockagentruntime.Client
-	brClient *bedrockagent.BedrockAgent
-	repo     kb.Repository
-	s3Client s3client.Client
+	kbClient    *bedrockagentruntime.Client
+	brClient    *bedrockagent.BedrockAgent
+	repo        kb.Repository
+	userService usersrv.Service
+	s3Client    s3client.Client
 }
 
 func New(kbClient *bedrockagentruntime.Client, brClient *bedrockagent.BedrockAgent, repo kb.Repository, s3 s3client.Client) *Service {
@@ -82,13 +84,18 @@ func (s *Service) CompleteAnswerWithMetadata(ctx context.Context, userMessage st
 }
 
 func (s *Service) GeneratePutURL(userID string, file string) (string, error) {
+	u, err := s.userService.GetUser(context.Background(), userID)
+	if err != nil {
+		return "", err
+	}
 	key := fmt.Sprintf("data/%s-%s", uuid.New().String(), file)
 	dataFile := kb.DataFile{
-		Filename: file,
-		S3Key:    key,
-		UserID:   userID,
+		Filename:  file,
+		S3Key:     key,
+		UserID:    userID,
+		UserEmail: u.Email,
 	}
-	_, err := s.repo.SaveData(context.Background(), dataFile)
+	_, err = s.repo.SaveData(context.Background(), dataFile)
 	if err != nil {
 		return "", err
 	}
@@ -105,6 +112,10 @@ func (s *Service) DeleteObject(fileID int) error {
 	if err != nil {
 		return err
 	}
+	if _, err := s.repo.DeleteData(context.Background(), fileID); err != nil {
+		return err
+	}
+
 	return s.s3Client.DeleteFile(file.S3Key)
 
 }

@@ -2,7 +2,6 @@ package kbapi
 
 import (
 	"context"
-	"fmt"
 	"strconv"
 	"time"
 

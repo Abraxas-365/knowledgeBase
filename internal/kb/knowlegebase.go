@@ -14,8 +14,9 @@ type KnowlegeBaseConfig struct {
 }
 
 type DataFile struct {
-	ID       int    `db:"id" json:"id"`
-	Filename string `db:"filename" json:"filename"`
-	S3Key    string `db:"s3_key" json:"s3_key"`
-	UserID   string `db:"user_id" json:"user_id"`
+	ID        int    `db:"id" json:"id"`
+	Filename  string `db:"filename" json:"filename"`
+	S3Key     string `db:"s3_key" json:"s3_key"`
+	UserID    string `db:"user_id" json:"user_id"`
+	UserEmail string `db:"user_email" json:"user_email"`
 }
