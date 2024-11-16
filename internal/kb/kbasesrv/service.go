@@ -24,10 +24,11 @@ type Service struct {
 	s3Client s3client.Client
 }
 
-func New(kbClient *bedrockagentruntime.Client, repo kb.Repository, s3 s3client.Client) *Service {
+func New(kbClient *bedrockagentruntime.Client, brClient *bedrockagent.BedrockAgent, repo kb.Repository, s3 s3client.Client) *Service {
 	return &Service{
 		kbClient: kbClient,
 		repo:     repo,
+		brClient: brClient,
 		s3Client: s3,
 	}
 }
@@ -113,6 +114,7 @@ func (s *Service) LisObjects(pageSize int32, continuationToken *string) ([]strin
 }
 
 func (s *Service) SyncKnowledgeBase(ctx context.Context) (*bedrockagent.StartIngestionJobOutput, error) {
+	fmt.Println("sync-knowledge-base")
 	kbConf, err := s.repo.GetKnowlegeBaseConfig()
 	if err != nil {
 		return nil, err
@@ -122,6 +124,7 @@ func (s *Service) SyncKnowledgeBase(ctx context.Context) (*bedrockagent.StartIng
 		KnowledgeBaseId: aws.String(kbConf.ID),
 		DataSourceId:    aws.String(kbConf.S3DataSurce),
 	}
+	fmt.Println("sync-knowledge-base2")
 
 	// Call StartIngestionJob
 	output, err := s.brClient.StartIngestionJob(input)
@@ -154,5 +157,3 @@ func (s *Service) SyncKnowledgeBase(ctx context.Context) (*bedrockagent.StartIng
 	// Return the IngestionJobId to track the job status later
 	return output, nil
 }
-
-//TODO: Implement the logic to get the status of the ingestion job

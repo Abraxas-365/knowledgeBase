@@ -19,6 +19,9 @@ import (
 	"github.com/Abraxas-365/toolkit/pkg/s3client"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/bedrockagentruntime"
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/bedrockagent"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/jmoiron/sqlx"
@@ -66,7 +69,13 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	kbSerive := kbsrv.New(client, repo, s3client)
+
+	brClient := bedrockagent.New(session.Must(session.NewSession(&aws.Config{
+		Region: aws.String("us-east-1"),
+	})))
+
+	// Then modify the kbService initialization to include the brClient:
+	kbSerive := kbsrv.New(client, brClient, repo, s3client)
 
 	app := fiber.New()
 	authMiddleware := lucia.NewAuthMiddleware(authSrv)
