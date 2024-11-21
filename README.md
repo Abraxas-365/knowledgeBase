@@ -44,6 +44,8 @@ KB_MODEL_PROMPT=prompt for the model, use aws guide to create the prompt
 KB_REGION= knowledge base region
 KB_S3_DATA_SOURCE=knowledgebase data source id
 
+REDIRECT_AFTER_LOGIN=http://localhost:30001/home
+ALLOW_ORIGINS=http://localhost:3001,http://localhost:3000
 GOOGLE_CLIENT_ID=google client id
 GOOGLE_CLIENT_SECRET=google secret id
 GOOGLE_REDIRECT_URI=redirect url

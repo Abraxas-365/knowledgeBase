@@ -3,8 +3,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"os"
-	"strings"
 
 	"github.com/Abraxas-365/opd/internal/kb/kbapi"
 	"github.com/Abraxas-365/opd/internal/kb/kbasesrv"
@@ -13,6 +11,7 @@ import (
 	"github.com/Abraxas-365/opd/internal/user/userapi"
 	"github.com/Abraxas-365/opd/internal/user/userinfra"
 	"github.com/Abraxas-365/opd/internal/user/usersrv"
+	"github.com/Abraxas-365/opd/pkg/conf"
 	"github.com/Abraxas-365/toolkit/pkg/errors"
 	"github.com/Abraxas-365/toolkit/pkg/lucia"
 	"github.com/Abraxas-365/toolkit/pkg/lucia/luciastore"
@@ -29,15 +28,9 @@ import (
 
 func main() {
 
-	uri := os.Getenv("DATABASE_URL")
-	if uri == "" {
-		panic("DATABASE_URL is not set")
-	}
+	conf := conf.Load()
 
-	if !strings.Contains(uri, "sslmode") {
-		uri += "?sslmode=disable"
-	}
-	db, err := sqlx.Connect("postgres", uri)
+	db, err := sqlx.Connect("postgres", conf.DatabaseURL)
 	if err != nil {
 		panic(err)
 	}
@@ -49,9 +42,9 @@ func main() {
 
 	// Initialize Google OAuth provider
 	googleProvider := lucia.NewGoogleProvider(
-		os.Getenv("GOOGLE_CLIENT_ID"),
-		os.Getenv("GOOGLE_CLIENT_SECRET"),
-		os.Getenv("GOOGLE_REDIRECT_URI"),
+		conf.GoogleClientID,
+		conf.GoogleClientSecret,
+		conf.GoogleRedirectURI,
 	)
 	authSrv.RegisterProvider("google", googleProvider)
 
@@ -83,7 +76,7 @@ func main() {
 
 	// Add CORS middleware
 	app.Use(cors.New(cors.Config{
-		AllowOrigins:     "http://localhost:3001, http://localhost:3000",
+		AllowOrigins:     conf.AllowOrigins,
 		AllowCredentials: true,
 		AllowHeaders:     "Origin, Content-Type, Accept, Authorization",
 		AllowMethods:     "GET,POST,HEAD,PUT,DELETE,PATCH,OPTIONS",
@@ -134,7 +127,7 @@ func main() {
 
 		fmt.Println(res)
 
-		return c.Redirect("http://localhost:3001")
+		return c.Redirect(conf.RedirectAfterLogin)
 	})
 	// Logout route
 	app.Post("/logout", func(c *fiber.Ctx) error {
@@ -149,5 +142,5 @@ func main() {
 	})
 
 	// Start server
-	app.Listen(":3000")
+	app.Listen(conf.Port)
 }
