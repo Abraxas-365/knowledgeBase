@@ -4,6 +4,10 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/Abraxas-365/opd/internal/chatuser/chatuserinfra"
+	"github.com/Abraxas-365/opd/internal/chatuser/chatusersrv"
+	"github.com/Abraxas-365/opd/internal/interaction/interactioninfra"
+	"github.com/Abraxas-365/opd/internal/interaction/interactionsrv"
 	"github.com/Abraxas-365/opd/internal/kb/kbapi"
 	"github.com/Abraxas-365/opd/internal/kb/kbasesrv"
 	"github.com/Abraxas-365/opd/internal/kb/kbinfra"
@@ -39,6 +43,11 @@ func main() {
 	userSrv := usersrv.NewService(userRepo)
 	sessionStore := luciastore.NewStoreFromConnection(db)
 	authSrv := lucia.NewAuthService[*user.User](userSrv, sessionStore)
+	chatUserRepo := chatuserinfra.NewChatUserStore(db)
+	chatUserSrv := chatusersrv.New(chatUserRepo)
+
+	interactionRepo := interactioninfra.NewInteractionStore(db)
+	interactionSrv := interactionsrv.New(interactionRepo)
 
 	// Initialize Google OAuth provider
 	googleProvider := lucia.NewGoogleProvider(
@@ -68,7 +77,7 @@ func main() {
 	})))
 
 	// Then modify the kbService initialization to include the brClient:
-	kbSerive := kbsrv.New(client, brClient, repo, s3client, *userSrv)
+	kbSerive := kbsrv.New(client, brClient, repo, s3client, *userSrv, *chatUserSrv, *interactionSrv)
 
 	app := fiber.New()
 	authMiddleware := lucia.NewAuthMiddleware(authSrv)

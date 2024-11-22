@@ -31,13 +31,22 @@ type Service struct {
 	s3Client           s3client.Client
 }
 
-func New(kbClient *bedrockagentruntime.Client, brClient *bedrockagent.BedrockAgent, repo kb.Repository, s3 s3client.Client, userService usersrv.Service) *Service {
+func New(kbClient *bedrockagentruntime.Client,
+	brClient *bedrockagent.BedrockAgent,
+	repo kb.Repository,
+	s3 s3client.Client,
+	userService usersrv.Service,
+	userChatService chatusersrv.Service,
+	InteractionService interactionsrv.Service,
+) *Service {
 	return &Service{
-		kbClient:    kbClient,
-		repo:        repo,
-		brClient:    brClient,
-		s3Client:    s3,
-		userService: userService,
+		kbClient:           kbClient,
+		repo:               repo,
+		brClient:           brClient,
+		s3Client:           s3,
+		userService:        userService,
+		userChatService:    userChatService,
+		interactionService: InteractionService,
 	}
 }
 

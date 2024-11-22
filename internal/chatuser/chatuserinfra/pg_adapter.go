@@ -1,4 +1,4 @@
-package chatinfra
+package chatuserinfra
 
 import (
 	"context"
