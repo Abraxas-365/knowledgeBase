@@ -5,6 +5,9 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/Abraxas-365/opd/internal/chatuser/chatusersrv"
+	"github.com/Abraxas-365/opd/internal/interaction"
+	"github.com/Abraxas-365/opd/internal/interaction/interactionsrv"
 	"github.com/Abraxas-365/opd/internal/kb"
 	"github.com/Abraxas-365/opd/internal/user/usersrv"
 	"github.com/Abraxas-365/toolkit/pkg/database"
@@ -19,11 +22,13 @@ import (
 )
 
 type Service struct {
-	kbClient    *bedrockagentruntime.Client
-	brClient    *bedrockagent.BedrockAgent
-	repo        kb.Repository
-	userService usersrv.Service
-	s3Client    s3client.Client
+	kbClient           *bedrockagentruntime.Client
+	brClient           *bedrockagent.BedrockAgent
+	repo               kb.Repository
+	userService        usersrv.Service
+	userChatService    chatusersrv.Service
+	interactionService interactionsrv.Service
+	s3Client           s3client.Client
 }
 
 func New(kbClient *bedrockagentruntime.Client, brClient *bedrockagent.BedrockAgent, repo kb.Repository, s3 s3client.Client, userService usersrv.Service) *Service {
@@ -36,9 +41,13 @@ func New(kbClient *bedrockagentruntime.Client, brClient *bedrockagent.BedrockAge
 	}
 }
 
-func (s *Service) CompleteAnswerWithMetadata(ctx context.Context, userMessage string, sessionID *string) (*bedrockagentruntime.RetrieveAndGenerateOutput, error) {
+func (s *Service) CompleteAnswerWithMetadata(ctx context.Context, userMessage string, sessionID *string, userchatID string) (*bedrockagentruntime.RetrieveAndGenerateOutput, error) {
 	kbConf, err := s.repo.GetKnowlegeBaseConfig()
 	if err != nil {
+		return nil, err
+	}
+
+	if _, err := s.userChatService.GetChatUserByID(ctx, userchatID); err != nil {
 		return nil, err
 	}
 
@@ -78,6 +87,34 @@ func (s *Service) CompleteAnswerWithMetadata(ctx context.Context, userMessage st
 	)
 	if err != nil {
 		return nil, errors.ErrServiceUnavailable(err.Error())
+	}
+
+	var chatInformationContext []string
+	for _, citation := range output.Citations {
+		for _, ref := range citation.RetrievedReferences {
+			if ref.Location == nil {
+				continue
+			}
+
+			if ref.Location.S3Location == nil {
+				continue
+			}
+
+			if ref.Location.S3Location.Uri == nil {
+				continue
+			}
+
+			chatInformationContext = append(chatInformationContext, *ref.Location.S3Location.Uri)
+		}
+	}
+
+	i := interaction.Interaction{
+		UserChatID:         userchatID,
+		ContextInteraction: chatInformationContext,
+	}
+
+	if _, err := s.interactionService.CreateInteraction(ctx, i); err != nil {
+		return nil, err
 	}
 
 	return output, nil

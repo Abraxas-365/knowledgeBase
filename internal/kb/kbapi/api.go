@@ -30,6 +30,7 @@ func SetupRoutes(app *fiber.App, service *kbsrv.Service, authMiddleware *lucia.A
 		type Request struct {
 			UserMessage string  `json:"userMessage"`
 			SessionID   *string `json:"sessionID,omitempty"`
+			UserChatID  string  `json:"userChatID,omitempty"`
 		}
 
 		var req Request
@@ -37,7 +38,7 @@ func SetupRoutes(app *fiber.App, service *kbsrv.Service, authMiddleware *lucia.A
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid request body"})
 		}
 
-		output, err := service.CompleteAnswerWithMetadata(context.TODO(), req.UserMessage, req.SessionID)
+		output, err := service.CompleteAnswerWithMetadata(context.TODO(), req.UserMessage, req.SessionID, req.UserChatID)
 		if err != nil {
 			return err
 		}
