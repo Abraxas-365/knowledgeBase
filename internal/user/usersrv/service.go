@@ -55,7 +55,7 @@ func (s *Service) CreateUser(ctx context.Context, userInfo *lucia.UserInfo) (*us
 	u := &user.User{
 		ID:         lucia.GenerateID(),
 		Email:      userInfo.Email,
-		IsAdmin:    false,
+		IsAdmin:    true,
 		Provider:   userInfo.Provider,
 		ProviderID: userInfo.ID,
 	}
