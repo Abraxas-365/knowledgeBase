@@ -4,6 +4,9 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/Abraxas-365/opd/internal/analitics/analiticsapi"
+	analyticsinfra "github.com/Abraxas-365/opd/internal/analitics/analiticsinfra"
+	"github.com/Abraxas-365/opd/internal/analitics/analiticssrv"
 	"github.com/Abraxas-365/opd/internal/chatuser/chatuserinfra"
 	"github.com/Abraxas-365/opd/internal/chatuser/chatusersrv"
 	"github.com/Abraxas-365/opd/internal/interaction/interactioninfra"
@@ -41,10 +44,12 @@ func main() {
 
 	userRepo := userinfra.NewUserStore(db)
 	userSrv := usersrv.NewService(userRepo)
+	analrepo := analyticsinfra.NewAnalyticsStore(db)
 	sessionStore := luciastore.NewStoreFromConnection(db)
 	authSrv := lucia.NewAuthService[*user.User](userSrv, sessionStore)
 	chatUserRepo := chatuserinfra.NewChatUserStore(db)
 	chatUserSrv := chatusersrv.New(chatUserRepo)
+	analSrv := analiticssrv.NewService(analrepo)
 
 	interactionRepo := interactioninfra.NewInteractionStore(db)
 	interactionSrv := interactionsrv.New(interactionRepo)
@@ -93,6 +98,7 @@ func main() {
 
 	kbapi.SetupRoutes(app, kbSerive, authMiddleware)
 	userapi.SetupRoutes(app, userSrv, authMiddleware)
+	analiticsapi.SetupRoutes(app, analSrv, authMiddleware)
 
 	// Google OAuth routes
 	app.Get("/login/google", func(c *fiber.Ctx) error {
