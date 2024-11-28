@@ -3,8 +3,6 @@ package chatuserapi
 import (
 	"github.com/Abraxas-365/opd/internal/chatuser"
 	"github.com/Abraxas-365/opd/internal/chatuser/chatusersrv"
-	"github.com/Abraxas-365/opd/internal/user"
-	"github.com/Abraxas-365/toolkit/pkg/lucia"
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -12,11 +10,10 @@ import (
 func SetupRoutes(
 	app *fiber.App,
 	service *chatusersrv.Service,
-	authMiddleware *lucia.AuthMiddleware[*user.User],
 ) {
 
 	// Get chat user by ID
-	app.Get("/chat-users/:id", authMiddleware.RequireAuth(), func(c *fiber.Ctx) error {
+	app.Get("/chat-users/:id", func(c *fiber.Ctx) error {
 		chatUserID := c.Params("id")
 
 		user, err := service.GetChatUserByID(c.Context(), chatUserID)
