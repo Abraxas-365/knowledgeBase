@@ -14,8 +14,8 @@ Here is the user's query:
 \$query\$"
 export KB_REGION="us-1"
 
-export GOOGLE_CLIENT_ID="22795433123-3tqiop2jfekacg2ig7toen3hpbimjlv5.apps.googleusercontent.com"
-export GOOGLE_CLIENT_SECRET="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"
+export GOOGLE_CLIENT_ID=
+export GOOGLE_CLIENT_SECRET=
 export GOOGLE_REDIRECT_URI="http://localhost:3000/login/google/callback"
 export DATABASE_URL="postgresql://myuser:mypassword@localhost:5432/mydatabase"
 
