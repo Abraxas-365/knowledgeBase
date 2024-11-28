@@ -7,6 +7,7 @@ import (
 	"github.com/Abraxas-365/opd/internal/analitics/analiticsapi"
 	analyticsinfra "github.com/Abraxas-365/opd/internal/analitics/analiticsinfra"
 	"github.com/Abraxas-365/opd/internal/analitics/analiticssrv"
+	"github.com/Abraxas-365/opd/internal/chatuser/chatuserapi"
 	"github.com/Abraxas-365/opd/internal/chatuser/chatuserinfra"
 	"github.com/Abraxas-365/opd/internal/chatuser/chatusersrv"
 	"github.com/Abraxas-365/opd/internal/interaction/interactioninfra"
@@ -99,6 +100,7 @@ func main() {
 	kbapi.SetupRoutes(app, kbSerive, authMiddleware)
 	userapi.SetupRoutes(app, userSrv, authMiddleware)
 	analiticsapi.SetupRoutes(app, analSrv, authMiddleware)
+	chatuserapi.SetupRoutes(app, chatUserSrv, authMiddleware)
 
 	// Google OAuth routes
 	app.Get("/login/google", func(c *fiber.Ctx) error {
