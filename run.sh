@@ -20,4 +20,5 @@ export GOOGLE_REDIRECT_URI="http://localhost:3000/login/google/callback"
 export DATABASE_URL="postgresql://myuser:mypassword@localhost:5432/mydatabase"
 
 export REDIRECT_AFTER_LOGIN="http://localhost:3001"
+
 go run cmd/main.go

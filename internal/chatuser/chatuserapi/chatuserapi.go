@@ -44,7 +44,7 @@ func SetupRoutes(
 		}
 
 		// Validate required fields
-		if newUser.Gender == "" || newUser.Ocupation == "" {
+		if newUser.Gender == "" || newUser.Occupation == "" {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 				"error": "Gender and Occupation are required",
 			})

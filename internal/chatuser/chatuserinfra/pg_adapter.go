@@ -56,8 +56,8 @@ func (s *PostgresStore) CreateChatUser(ctx context.Context, u chatuser.ChatUser)
 		u.ID,
 		u.Age,
 		u.Gender,
-		u.Ocupation,
-	).Scan(&u.ID, &u.Age, &u.Gender, &u.Ocupation)
+		u.Occupation,
+	).Scan(&u.ID, &u.Age, &u.Gender, &u.Occupation)
 
 	if err != nil {
 		return nil, errors.ErrDatabase(fmt.Sprintf("Failed to create chat user: %v", err))
