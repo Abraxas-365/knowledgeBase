@@ -22,7 +22,7 @@ func NewChatUserStore(db *sqlx.DB) *PostgresStore {
 func (s *PostgresStore) GetChatUserByID(ctx context.Context, chatUserID string) (*chatuser.ChatUser, error) {
 	var u chatuser.ChatUser
 
-	query := `SELECT id, age, gender, occupation FROM "chatUser" WHERE id = $1`
+	query := `SELECT id, age, gender, occupation FROM chatUser WHERE id = $1`
 	err := s.db.GetContext(ctx, &u, query, chatUserID)
 	if err != nil {
 		return nil, errors.ErrNotFound("Chat user not found")
@@ -34,7 +34,7 @@ func (s *PostgresStore) GetChatUserByID(ctx context.Context, chatUserID string) 
 func (s *PostgresStore) CreateChatUser(ctx context.Context, u chatuser.ChatUser) (*chatuser.ChatUser, error) {
 	// First, check if user already exists
 	var exists bool
-	checkQuery := `SELECT EXISTS(SELECT 1 FROM "chatUser" WHERE id = $1)`
+	checkQuery := `SELECT EXISTS(SELECT 1 FROM chatUser WHERE id = $1)`
 	err := s.db.GetContext(ctx, &exists, checkQuery, u.ID)
 	if err != nil {
 		return nil, errors.ErrDatabase(fmt.Sprintf("Failed to check user existence: %v", err))
@@ -46,7 +46,7 @@ func (s *PostgresStore) CreateChatUser(ctx context.Context, u chatuser.ChatUser)
 
 	// If user doesn't exist, proceed with creation
 	query := `
-		INSERT INTO "chatUser" (id, age, gender, occupation) 
+		INSERT INTO chatUser (id, age, gender, occupation) 
 		VALUES ($1, $2, $3, $4) 
 		RETURNING id, age, gender, occupation`
 
