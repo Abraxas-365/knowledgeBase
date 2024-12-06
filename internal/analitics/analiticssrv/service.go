@@ -30,11 +30,11 @@ func (s Service) GetAllAnalitics(ctx context.Context, startDate *time.Time, endD
 	}
 	allAnalitics = append(allAnalitics, *data)
 
-	users, err := s.repo.GetTotalUsers(ctx, startDate, endDate)
-	if err != nil {
-		return nil, err
-	}
-	allAnalitics = append(allAnalitics, *users)
+	// users, err := s.repo.GetTotalUsers(ctx, startDate, endDate)
+	// if err != nil {
+	// 	return nil, err
+	// }
+	// allAnalitics = append(allAnalitics, *users)
 
 	return allAnalitics, nil
 
