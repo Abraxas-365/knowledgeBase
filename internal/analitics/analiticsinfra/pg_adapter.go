@@ -3,7 +3,6 @@ package analyticsinfra
 import (
 	"context"
 	"database/sql"
-	"fmt"
 	"strconv"
 	"time"
 
@@ -20,218 +19,170 @@ func NewAnalyticsStore(db *sqlx.DB) *PostgresStore {
 	return &PostgresStore{db: db}
 }
 
-func (s *PostgresStore) getDefaultDateRange() (start, end time.Time) {
-	now := time.Now()
-	start = time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, time.UTC)
-	return start, now
-}
-
-func formatDate(t time.Time) string {
-	return t.Format("2006-01-02")
-}
-
 func (s *PostgresStore) GetInteractions(ctx context.Context, startDate *time.Time, endDate *time.Time) (*analitics.Statistic, error) {
-	start, end := s.getDefaultDateRange()
+	query := `SELECT COUNT(*) FROM interactions`
+	args := []interface{}{}
+
 	if startDate != nil && endDate != nil {
-		start = *startDate
-		end = *endDate
+		query = `SELECT COUNT(*) FROM interactions WHERE created_at BETWEEN $1 AND $2`
+		args = append(args, startDate, endDate)
 	}
 
-	query := `
-        SELECT COUNT(*) 
-        FROM interactions 
-        WHERE created_at >= $1 
-        AND created_at <= $2`
-
-	var count int64
-	err := s.db.GetContext(ctx, &count, query, start, end)
+	var count int
+	err := s.db.GetContext(ctx, &count, query, args...)
 	if err != nil {
-		return nil, errors.ErrDatabase(fmt.Sprintf("failed to get interactions count: %v", err))
+		return nil, errors.ErrDatabase("failed to get interactions count: " + err.Error())
 	}
 
-	if count == 0 {
-		return nil, errors.ErrNotFound("no interactions found for the specified period")
+	if startDate != nil && endDate != nil {
+		return analitics.NewInteractionsBetweenDates(
+			strconv.Itoa(count),
+			startDate.Format("2006-01-02"),
+			endDate.Format("2006-01-02"),
+		), nil
 	}
 
-	if startDate == nil && endDate == nil {
-		return analitics.NewTotalMonthlyInteracions(strconv.FormatInt(count, 10)), nil
-	}
-
-	return analitics.NewInteractionsBetweenDates(
-		strconv.FormatInt(count, 10),
-		formatDate(start),
-		formatDate(end),
-	), nil
+	return analitics.NewTotalMonthlyInteracions(strconv.Itoa(count)), nil
 }
 
 func (s *PostgresStore) GetMostConsultedData(ctx context.Context, startDate *time.Time, endDate *time.Time) (*analitics.Statistic, error) {
-	start, end := s.getDefaultDateRange()
+	query := `
+		SELECT filename, COUNT(*) as access_count 
+		FROM files f
+		JOIN interactions i ON f.id = ANY(i.context_interaction::int[])
+	`
+	args := []interface{}{}
+
 	if startDate != nil && endDate != nil {
-		start = *startDate
-		end = *endDate
+		query += ` WHERE i.created_at BETWEEN $1 AND $2`
+		args = append(args, startDate, endDate)
 	}
 
-	query := `
-        SELECT filename 
-        FROM files 
-        WHERE created_at >= $1 
-        AND created_at <= $2 
-        GROUP BY filename 
-        ORDER BY COUNT(*) DESC 
-        LIMIT 1`
+	query += ` GROUP BY filename ORDER BY access_count DESC LIMIT 1`
 
 	var filename string
-	err := s.db.GetContext(ctx, &filename, query, start, end)
+	err := s.db.GetContext(ctx, &filename, query, args...)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return nil, errors.ErrNotFound("no data consulted in the specified period")
+			filename = "No data available"
+		} else {
+			return nil, errors.ErrDatabase("failed to get most consulted data: " + err.Error())
 		}
-		return nil, errors.ErrDatabase(fmt.Sprintf("failed to get most consulted data: %v", err))
 	}
 
-	if startDate == nil && endDate == nil {
-		return analitics.NewMonthlyMostConsultedData(filename), nil
+	if startDate != nil && endDate != nil {
+		return analitics.NewMostConsultedDataBetweenDates(
+			filename,
+			startDate.Format("2006-01-02"),
+			endDate.Format("2006-01-02"),
+		), nil
 	}
 
-	return analitics.NewMostConsultedDataBetweenDates(
-		filename,
-		formatDate(start),
-		formatDate(end),
-	), nil
+	return analitics.NewMonthlyMostConsultedData(filename), nil
 }
 
 func (s *PostgresStore) GetTotalUsers(ctx context.Context, startDate *time.Time, endDate *time.Time) (*analitics.Statistic, error) {
-	start, end := s.getDefaultDateRange()
+	query := `SELECT COUNT(*) FROM "user"`
+	args := []interface{}{}
+
 	if startDate != nil && endDate != nil {
-		start = *startDate
-		end = *endDate
+		query = `SELECT COUNT(*) FROM "user" WHERE created_at BETWEEN $1 AND $2`
+		args = append(args, startDate, endDate)
 	}
 
-	query := `
-        SELECT COUNT(DISTINCT user_id) 
-        FROM chatUser 
-        WHERE created_at >= $1 
-        AND created_at <= $2`
-
-	var count int64
-	err := s.db.GetContext(ctx, &count, query, start, end)
+	var count int
+	err := s.db.GetContext(ctx, &count, query, args...)
 	if err != nil {
-		return nil, errors.ErrDatabase(fmt.Sprintf("failed to get total users: %v", err))
+		return nil, errors.ErrDatabase("failed to get total users: " + err.Error())
 	}
 
-	if count == 0 {
-		return nil, errors.ErrNotFound("no users found for the specified period")
+	if startDate != nil && endDate != nil {
+		return analitics.NewUsersBetweenDates(
+			strconv.Itoa(count),
+			startDate.Format("2006-01-02"),
+			endDate.Format("2006-01-02"),
+		), nil
 	}
 
-	if startDate == nil && endDate == nil {
-		return analitics.NewTotalUsers(strconv.FormatInt(count, 10)), nil
-	}
-
-	return analitics.NewUsersBetweenDates(
-		strconv.FormatInt(count, 10),
-		formatDate(start),
-		formatDate(end),
-	), nil
+	return analitics.NewTotalUsers(strconv.Itoa(count)), nil
 }
 
 func (s *PostgresStore) GetDailyUsers(ctx context.Context, startDate, endDate time.Time) ([]analitics.DailyStatistic, error) {
 	query := `
-        WITH RECURSIVE dates AS (
-            SELECT DATE(:start_date) AS date
-            UNION ALL
-            SELECT date + INTERVAL '1 day'
-            FROM dates
-            WHERE date < DATE(:end_date)
-        )
-        SELECT 
-            dates.date::timestamp with time zone as date,
-            COALESCE(COUNT(DISTINCT i.user_chat_id), 0) as count
-        FROM dates
-        LEFT JOIN interactions i ON DATE(i.created_at) = dates.date
-        GROUP BY dates.date
-        ORDER BY dates.date;
-    `
+		SELECT 
+			DATE(created_at) as date,
+			COUNT(*) as count
+		FROM "user"
+		WHERE created_at BETWEEN $1 AND $2
+		GROUP BY DATE(created_at)
+		ORDER BY date
+	`
 
 	var stats []analitics.DailyStatistic
-	args := map[string]interface{}{
-		"start_date": startDate,
-		"end_date":   endDate,
+	err := s.db.SelectContext(ctx, &stats, query, startDate, endDate)
+	if err != nil {
+		return nil, errors.ErrDatabase("failed to get daily users: " + err.Error())
 	}
 
-	err := s.db.SelectContext(ctx, &stats, s.db.Rebind(query), args)
-	if err != nil {
-		return nil, errors.ErrDatabase(fmt.Sprintf("failed to get daily active users: %v", err))
+	if len(stats) == 0 {
+		return nil, errors.ErrNotFound("no daily user statistics found for the specified date range")
 	}
 
 	return stats, nil
 }
 
 func (s *PostgresStore) GetDailyActiveUsers(ctx context.Context, startDate, endDate time.Time, activeDays int) ([]analitics.DailyStatistic, error) {
-	query := `
-        WITH RECURSIVE dates AS (
-            SELECT DATE(:start_date) AS date
-            UNION ALL
-            SELECT date + INTERVAL '1 day'
-            FROM dates
-            WHERE date < DATE(:end_date)
-        )
-        SELECT 
-            dates.date::timestamp with time zone as date,
-            COALESCE(COUNT(DISTINCT user_chat_id), 0) as count
-        FROM dates
-        LEFT JOIN LATERAL (
-            SELECT DISTINCT i.user_chat_id
-            FROM interactions i
-            WHERE i.created_at >= dates.date - INTERVAL '1 day' * :active_days
-            AND i.created_at < dates.date + INTERVAL '1 day'
-        ) active_users ON true
-        GROUP BY dates.date
-        ORDER BY dates.date;
-    `
-
-	var stats []analitics.DailyStatistic
-	args := map[string]interface{}{
-		"start_date":  startDate,
-		"end_date":    endDate,
-		"active_days": activeDays,
+	if activeDays < 1 {
+		return nil, errors.ErrBadRequest("active days must be greater than 0")
 	}
 
-	err := s.db.SelectContext(ctx, &stats, s.db.Rebind(query), args)
+	query := `
+		WITH daily_active AS (
+			SELECT 
+				DATE(created_at) as date,
+				COUNT(DISTINCT user_chat_id) as count
+			FROM interactions
+			WHERE created_at BETWEEN $1 AND $2
+			GROUP BY DATE(created_at)
+			HAVING COUNT(DISTINCT user_chat_id) >= $3
+		)
+		SELECT date, count
+		FROM daily_active
+		ORDER BY date
+	`
+
+	var stats []analitics.DailyStatistic
+	err := s.db.SelectContext(ctx, &stats, query, startDate, endDate, activeDays)
 	if err != nil {
-		return nil, errors.ErrDatabase(fmt.Sprintf("failed to get daily active users: %v", err))
+		return nil, errors.ErrDatabase("failed to get daily active users: " + err.Error())
+	}
+
+	if len(stats) == 0 {
+		return nil, errors.ErrNotFound("no daily active user statistics found for the specified criteria")
 	}
 
 	return stats, nil
 }
 
-// New function to get daily interactions
 func (s *PostgresStore) GetDailyInteractions(ctx context.Context, startDate, endDate time.Time) ([]analitics.DailyStatistic, error) {
 	query := `
-        WITH RECURSIVE dates AS (
-            SELECT DATE(:start_date) AS date
-            UNION ALL
-            SELECT date + INTERVAL '1 day'
-            FROM dates
-            WHERE date < DATE(:end_date)
-        )
-        SELECT 
-            dates.date::timestamp with time zone as date,
-            COALESCE(COUNT(i.id), 0) as count
-        FROM dates
-        LEFT JOIN interactions i ON DATE(i.created_at) = dates.date
-        GROUP BY dates.date
-        ORDER BY dates.date;
-    `
+		SELECT 
+			DATE(created_at) as date,
+			COUNT(*) as count
+		FROM interactions
+		WHERE created_at BETWEEN $1 AND $2
+		GROUP BY DATE(created_at)
+		ORDER BY date
+	`
 
 	var stats []analitics.DailyStatistic
-	args := map[string]interface{}{
-		"start_date": startDate,
-		"end_date":   endDate,
+	err := s.db.SelectContext(ctx, &stats, query, startDate, endDate)
+	if err != nil {
+		return nil, errors.ErrDatabase("failed to get daily interactions: " + err.Error())
 	}
 
-	err := s.db.SelectContext(ctx, &stats, s.db.Rebind(query), args)
-	if err != nil {
-		return nil, errors.ErrDatabase(fmt.Sprintf("failed to get daily interactions: %v", err))
+	if len(stats) == 0 {
+		return nil, errors.ErrNotFound("no daily interaction statistics found for the specified date range")
 	}
 
 	return stats, nil
