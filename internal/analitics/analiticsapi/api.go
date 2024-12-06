@@ -16,6 +16,8 @@ func SetupRoutes(
 	authMiddleware *lucia.AuthMiddleware[*user.User],
 ) {
 	app.Get("/analytics", authMiddleware.RequireAuth(), getAnalytics(service))
+	app.Get("/analytics/daily/users", authMiddleware.RequireAuth(), getDailyUsers(service))
+	app.Get("/analytics/daily/interactions", authMiddleware.RequireAuth(), getDailyInteractions(service))
 }
 
 func getAnalytics(service *analiticssrv.Service) fiber.Handler {
@@ -76,6 +78,116 @@ func getAnalytics(service *analiticssrv.Service) fiber.Handler {
 
 		return c.JSON(fiber.Map{
 			"data": analytics,
+		})
+	}
+}
+
+func getDailyUsers(service *analiticssrv.Service) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		startDateStr := c.Query("start_date")
+		endDateStr := c.Query("end_date")
+
+		if startDateStr == "" || endDateStr == "" {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"error": "Both start_date and end_date are required",
+			})
+		}
+
+		startDate, err := time.Parse("2006-01-02", startDateStr)
+		if err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"error": "Invalid start_date format. Use YYYY-MM-DD",
+			})
+		}
+
+		endDate, err := time.Parse("2006-01-02", endDateStr)
+		if err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"error": "Invalid end_date format. Use YYYY-MM-DD",
+			})
+		}
+
+		if endDate.Before(startDate) {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"error": "end_date cannot be before start_date",
+			})
+		}
+
+		dailyStats, err := service.GetDailyUsersInRange(c.Context(), startDate, endDate)
+		if err != nil {
+			switch {
+			case errors.IsNotFound(err):
+				return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+					"error": err.Error(),
+				})
+			case errors.IsDatabaseError(err):
+				return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+					"error": "Database error occurred",
+				})
+			default:
+				return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+					"error": "Failed to fetch daily user statistics",
+				})
+			}
+		}
+
+		return c.JSON(fiber.Map{
+			"data": dailyStats,
+		})
+	}
+}
+
+func getDailyInteractions(service *analiticssrv.Service) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		startDateStr := c.Query("start_date")
+		endDateStr := c.Query("end_date")
+
+		if startDateStr == "" || endDateStr == "" {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"error": "Both start_date and end_date are required",
+			})
+		}
+
+		startDate, err := time.Parse("2006-01-02", startDateStr)
+		if err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"error": "Invalid start_date format. Use YYYY-MM-DD",
+			})
+		}
+
+		endDate, err := time.Parse("2006-01-02", endDateStr)
+		if err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"error": "Invalid end_date format. Use YYYY-MM-DD",
+			})
+		}
+
+		if endDate.Before(startDate) {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"error": "end_date cannot be before start_date",
+			})
+		}
+
+		dailyStats, err := service.GetDailyInteractionsInRange(c.Context(), startDate, endDate)
+		if err != nil {
+			switch {
+			case errors.IsNotFound(err):
+				return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+					"error": err.Error(),
+				})
+			case errors.IsDatabaseError(err):
+				return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+					"error": "Database error occurred",
+				})
+			default:
+				return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+					"error": "Failed to fetch daily interaction statistics",
+				})
+			}
+		}
+
+		return c.JSON(fiber.Map{
+			"data": dailyStats,
 		})
 	}
 }

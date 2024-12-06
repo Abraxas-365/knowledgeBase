@@ -133,3 +133,106 @@ func (s *PostgresStore) GetTotalUsers(ctx context.Context, startDate *time.Time,
 		formatDate(end),
 	), nil
 }
+
+func (s *PostgresStore) GetDailyUsers(ctx context.Context, startDate, endDate time.Time) ([]analitics.DailyStatistic, error) {
+	query := `
+        WITH RECURSIVE dates AS (
+            SELECT DATE(:start_date) AS date
+            UNION ALL
+            SELECT date + INTERVAL '1 day'
+            FROM dates
+            WHERE date < DATE(:end_date)
+        )
+        SELECT 
+            dates.date::timestamp with time zone as date,
+            COALESCE(COUNT(DISTINCT i.user_chat_id), 0) as count
+        FROM dates
+        LEFT JOIN interactions i ON DATE(i.created_at) = dates.date
+        GROUP BY dates.date
+        ORDER BY dates.date;
+    `
+
+	var stats []analitics.DailyStatistic
+	args := map[string]interface{}{
+		"start_date": startDate,
+		"end_date":   endDate,
+	}
+
+	err := s.db.SelectContext(ctx, &stats, s.db.Rebind(query), args)
+	if err != nil {
+		return nil, errors.ErrDatabase(fmt.Sprintf("failed to get daily active users: %v", err))
+	}
+
+	return stats, nil
+}
+
+func (s *PostgresStore) GetDailyActiveUsers(ctx context.Context, startDate, endDate time.Time, activeDays int) ([]analitics.DailyStatistic, error) {
+	query := `
+        WITH RECURSIVE dates AS (
+            SELECT DATE(:start_date) AS date
+            UNION ALL
+            SELECT date + INTERVAL '1 day'
+            FROM dates
+            WHERE date < DATE(:end_date)
+        )
+        SELECT 
+            dates.date::timestamp with time zone as date,
+            COALESCE(COUNT(DISTINCT user_chat_id), 0) as count
+        FROM dates
+        LEFT JOIN LATERAL (
+            SELECT DISTINCT i.user_chat_id
+            FROM interactions i
+            WHERE i.created_at >= dates.date - INTERVAL '1 day' * :active_days
+            AND i.created_at < dates.date + INTERVAL '1 day'
+        ) active_users ON true
+        GROUP BY dates.date
+        ORDER BY dates.date;
+    `
+
+	var stats []analitics.DailyStatistic
+	args := map[string]interface{}{
+		"start_date":  startDate,
+		"end_date":    endDate,
+		"active_days": activeDays,
+	}
+
+	err := s.db.SelectContext(ctx, &stats, s.db.Rebind(query), args)
+	if err != nil {
+		return nil, errors.ErrDatabase(fmt.Sprintf("failed to get daily active users: %v", err))
+	}
+
+	return stats, nil
+}
+
+// New function to get daily interactions
+func (s *PostgresStore) GetDailyInteractions(ctx context.Context, startDate, endDate time.Time) ([]analitics.DailyStatistic, error) {
+	query := `
+        WITH RECURSIVE dates AS (
+            SELECT DATE(:start_date) AS date
+            UNION ALL
+            SELECT date + INTERVAL '1 day'
+            FROM dates
+            WHERE date < DATE(:end_date)
+        )
+        SELECT 
+            dates.date::timestamp with time zone as date,
+            COALESCE(COUNT(i.id), 0) as count
+        FROM dates
+        LEFT JOIN interactions i ON DATE(i.created_at) = dates.date
+        GROUP BY dates.date
+        ORDER BY dates.date;
+    `
+
+	var stats []analitics.DailyStatistic
+	args := map[string]interface{}{
+		"start_date": startDate,
+		"end_date":   endDate,
+	}
+
+	err := s.db.SelectContext(ctx, &stats, s.db.Rebind(query), args)
+	if err != nil {
+		return nil, errors.ErrDatabase(fmt.Sprintf("failed to get daily interactions: %v", err))
+	}
+
+	return stats, nil
+}

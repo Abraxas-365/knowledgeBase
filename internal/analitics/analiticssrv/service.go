@@ -39,3 +39,20 @@ func (s Service) GetAllAnalitics(ctx context.Context, startDate *time.Time, endD
 	return allAnalitics, nil
 
 }
+
+func (s Service) GetDailyUsersInRange(ctx context.Context, startDate, endDate time.Time) ([]analitics.DailyStatistic, error) {
+	// Normalize times to start and end of day
+	start := time.Date(startDate.Year(), startDate.Month(), startDate.Day(), 0, 0, 0, 0, time.UTC)
+	end := time.Date(endDate.Year(), endDate.Month(), endDate.Day(), 23, 59, 59, 999999999, time.UTC)
+
+	return s.repo.GetDailyUsers(ctx, start, end)
+}
+
+// GetDailyInteractionsInRange gets interactions per day for a specific date range
+func (s Service) GetDailyInteractionsInRange(ctx context.Context, startDate, endDate time.Time) ([]analitics.DailyStatistic, error) {
+	// Normalize times to start and end of day
+	start := time.Date(startDate.Year(), startDate.Month(), startDate.Day(), 0, 0, 0, 0, time.UTC)
+	end := time.Date(endDate.Year(), endDate.Month(), endDate.Day(), 23, 59, 59, 999999999, time.UTC)
+
+	return s.repo.GetDailyInteractions(ctx, start, end)
+}

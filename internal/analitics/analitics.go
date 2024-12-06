@@ -1,6 +1,9 @@
 package analitics
 
-import "fmt"
+import (
+	"fmt"
+	"time"
+)
 
 type Statistic struct {
 	Title       string `json:"title"`
@@ -69,4 +72,9 @@ func NewMostConsultedDataBetweenDates(file string, startDate string, endDate str
 		Prefix:      "",
 		Suffix:      "",
 	}
+}
+
+type DailyStatistic struct {
+	Date  time.Time `json:"date" db:"date"`
+	Count int       `json:"count" db:"count"`
 }
