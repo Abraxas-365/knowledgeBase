@@ -74,12 +74,26 @@ func (s *Service) CompleteAnswerWithMetadata(ctx context.Context, userMessage st
 					ModelArn:        aws.String(kbConf.Model.ModelId),
 					RetrievalConfiguration: &types.KnowledgeBaseRetrievalConfiguration{
 						VectorSearchConfiguration: &types.KnowledgeBaseVectorSearchConfiguration{
-							NumberOfResults: aws.Int32(int32(kbConf.NumberOfResults)),
+							NumberOfResults:    aws.Int32(int32(kbConf.NumberOfResults)),
+							OverrideSearchType: types.SearchTypeHybrid,
 						},
 					},
 					GenerationConfiguration: &types.GenerationConfiguration{
 						PromptTemplate: &types.PromptTemplate{
 							TextPromptTemplate: aws.String(kbConf.Model.Prompt),
+						},
+						InferenceConfig: &types.InferenceConfig{
+							TextInferenceConfig: &types.TextInferenceConfig{
+								Temperature:   aws.Float32(0),
+								TopP:          aws.Float32(1),
+								MaxTokens:     aws.Int32(2048),
+								StopSequences: []string{"\nObservation"},
+							},
+						},
+					},
+					OrchestrationConfiguration: &types.OrchestrationConfiguration{
+						QueryTransformationConfiguration: &types.QueryTransformationConfiguration{
+							Type: types.QueryTransformationTypeQueryDecomposition,
 						},
 						InferenceConfig: &types.InferenceConfig{
 							TextInferenceConfig: &types.TextInferenceConfig{
@@ -127,7 +141,6 @@ func (s *Service) CompleteAnswerWithMetadata(ctx context.Context, userMessage st
 	}
 
 	return output, nil
-
 }
 
 func (s *Service) GeneratePutURL(userID string, file string) (string, error) {
