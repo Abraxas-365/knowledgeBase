@@ -135,7 +135,7 @@ func (s *Service) GeneratePutURL(userID string, file string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	key := fmt.Sprintf("data/%s-%s", uuid.New().String(), file)
+	key := fmt.Sprintf("data/%s-%s", file, uuid.New().String())
 	dataFile := kb.DataFile{
 		Filename:  file,
 		S3Key:     key,
