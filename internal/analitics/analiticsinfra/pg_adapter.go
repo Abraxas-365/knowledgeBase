@@ -47,26 +47,26 @@ func (s *PostgresStore) GetInteractions(ctx context.Context, startDate *time.Tim
 
 func (s *PostgresStore) GetMostConsultedData(ctx context.Context, startDate *time.Time, endDate *time.Time) (*analitics.Statistic, error) {
 	query := `
-		WITH file_counts AS (
-			SELECT f.filename, COUNT(*) as access_count 
-			FROM files f
-			JOIN interactions i ON f.id::text = ANY(i.context_interaction)
-	`
+        WITH file_counts AS (
+            SELECT unnest(context_interaction) as file_path, COUNT(*) as access_count 
+            FROM interactions
+    `
 	args := []interface{}{}
 
 	if startDate != nil && endDate != nil {
-		query += ` WHERE i.created_at BETWEEN $1 AND $2`
+		query += ` WHERE created_at BETWEEN $1 AND $2`
 		args = append(args, startDate, endDate)
 	}
 
 	query += `
-			GROUP BY f.filename
-		)
-		SELECT filename 
-		FROM file_counts 
-		ORDER BY access_count DESC 
-		LIMIT 1
-	`
+            GROUP BY file_path
+        )
+        SELECT file_path as filename
+        FROM file_counts 
+        WHERE file_path IS NOT NULL
+        ORDER BY access_count DESC 
+        LIMIT 1
+    `
 
 	var filename string
 	err := s.db.GetContext(ctx, &filename, query, args...)
