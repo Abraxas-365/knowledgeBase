@@ -60,6 +60,45 @@ func (s *Service) CompleteAnswerWithMetadata(ctx context.Context, userMessage st
 		return nil, err
 	}
 
+	orchestrationPrompt := `You are a query creation agent. You will be provided with a function and a description of what it searches over. The user will provide you a question, and your job is to determine the optimal query to use based on the user's question.
+Always create the questions in the lenguge of the user, in which he is interacting.
+Here are a few examples of queries formed by other search function selection and query creation agents: 
+
+<examples>
+  <example>
+    <question> What if my vehicle is totaled in an accident? </question>
+    <generated_query> what happens if my vehicle is totaled </generated_query>
+  </example>
+  <example>
+    <question> I am relocating within the same state. Can I keep my current agent? </question>
+    <generated_query> can I keep my current agent when moving in state </generated_query>
+  </example>
+</examples> 
+  
+You should also pay attention to the conversation history between the user and the search engine in order to gain the context necessary to create the query. 
+Here's another example that shows how you should reference the conversation history when generating a query:
+
+<example>
+  <example_conversation_history>
+    <example_conversation>
+      <question> How many vehicles can I include in a quote in Kansas </question>
+      <answer> You can include 5 vehicles in a quote if you live in Kansas </answer>
+    </example_conversation>
+    <example_conversation>
+      <question> What about texas? </question>
+      <answer> You can include 3 vehicles in a quote if you live in Texas </answer>
+    </example_conversation>
+  </example_conversation_history>
+</example> 
+
+IMPORTANT: the elements in the <example> tags should not be assumed to have been provided to you to use UNLESS they are also explicitly given to you below. 
+All of the values and information within the examples (the questions, answers, and function calls) are strictly part of the examples and have not been provided to you. 
+
+Here is the current conversation history: 
+$conversation_history$
+
+$output_format_instructions$`
+
 	output, err := s.kbClient.RetrieveAndGenerate(
 		context.TODO(),
 		&bedrockagentruntime.RetrieveAndGenerateInput{
@@ -94,6 +133,9 @@ func (s *Service) CompleteAnswerWithMetadata(ctx context.Context, userMessage st
 					OrchestrationConfiguration: &types.OrchestrationConfiguration{
 						QueryTransformationConfiguration: &types.QueryTransformationConfiguration{
 							Type: types.QueryTransformationTypeQueryDecomposition,
+						},
+						PromptTemplate: &types.PromptTemplate{
+							TextPromptTemplate: aws.String(orchestrationPrompt),
 						},
 						InferenceConfig: &types.InferenceConfig{
 							TextInferenceConfig: &types.TextInferenceConfig{
