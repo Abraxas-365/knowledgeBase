@@ -1,0 +1,2 @@
+ALTER TABLE chatUser
+ADD COLUMN location TEXT;

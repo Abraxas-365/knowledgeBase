@@ -22,7 +22,7 @@ func NewChatUserStore(db *sqlx.DB) *PostgresStore {
 func (s *PostgresStore) GetChatUserByID(ctx context.Context, chatUserID string) (*chatuser.ChatUser, error) {
 	var u chatuser.ChatUser
 
-	query := `SELECT id, age, gender, occupation FROM chatUser WHERE id = $1`
+	query := `SELECT id, age, gender, occupation, location FROM chatUser WHERE id = $1`
 	err := s.db.GetContext(ctx, &u, query, chatUserID)
 	if err != nil {
 		return nil, errors.ErrNotFound("Chat user not found")
@@ -46,9 +46,9 @@ func (s *PostgresStore) CreateChatUser(ctx context.Context, u chatuser.ChatUser)
 
 	// If user doesn't exist, proceed with creation
 	query := `
-		INSERT INTO chatUser (id, age, gender, occupation) 
-		VALUES ($1, $2, $3, $4) 
-		RETURNING id, age, gender, occupation`
+		INSERT INTO chatUser (id, age, gender, occupation, location) 
+		VALUES ($1, $2, $3, $4, $5) 
+		RETURNING id, age, gender, occupation, location`
 
 	err = s.db.QueryRowContext(
 		ctx,
@@ -57,7 +57,8 @@ func (s *PostgresStore) CreateChatUser(ctx context.Context, u chatuser.ChatUser)
 		u.Age,
 		u.Gender,
 		u.Ocupation,
-	).Scan(&u.ID, &u.Age, &u.Gender, &u.Ocupation)
+		u.Location,
+	).Scan(&u.ID, &u.Age, &u.Gender, &u.Ocupation, &u.Location)
 
 	if err != nil {
 		return nil, errors.ErrDatabase(fmt.Sprintf("Failed to create chat user: %v", err))
