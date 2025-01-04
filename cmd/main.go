@@ -50,7 +50,12 @@ func main() {
 	authSrv := lucia.NewAuthService[*user.User](userSrv, sessionStore)
 	chatUserRepo := chatuserinfra.NewChatUserStore(db)
 	chatUserSrv := chatusersrv.New(chatUserRepo)
-	analSrv := analiticssrv.NewService(analrepo)
+
+	s3client, err := s3client.NewS3Client("vendy", s3client.WithRegion("us-east-1"))
+	if err != nil {
+		panic(err)
+	}
+	analSrv := analiticssrv.NewService(analrepo, s3client)
 
 	interactionRepo := interactioninfra.NewInteractionStore(db)
 	interactionSrv := interactionsrv.New(interactionRepo)
@@ -60,6 +65,10 @@ func main() {
 		conf.GoogleClientID,
 		conf.GoogleClientSecret,
 		conf.GoogleRedirectURI,
+		[]string{
+			"https://www.googleapis.com/auth/userinfo.email",
+			"https://www.googleapis.com/auth/userinfo.profile",
+		},
 	)
 	authSrv.RegisterProvider("google", googleProvider)
 
@@ -73,10 +82,6 @@ func main() {
 	client := bedrockagentruntime.NewFromConfig(cfg)
 
 	repo := kbinfra.NewStore(db)
-	s3client, err := s3client.NewS3Client("vendy", s3client.WithRegion("us-east-1"))
-	if err != nil {
-		panic(err)
-	}
 
 	brClient := bedrockagent.New(session.Must(session.NewSession(&aws.Config{
 		Region: aws.String("us-east-1"),

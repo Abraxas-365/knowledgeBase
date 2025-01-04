@@ -2,8 +2,8 @@ cloud.google.com/go/compute/metadata v0.3.0 h1:Tz+eQXMEqDIKRsmY3cHTL6FVaynIjX2Qx
 cloud.google.com/go/compute/metadata v0.3.0/go.mod h1:zFmK7XCadkQkj6TtorcaGlCW1hT1fIilQDwofLpJ20k=
 filippo.io/edwards25519 v1.1.0 h1:FNf4tywRC1HmFuKW5xopWpigGjJKiJSV0Cqo0cJWDaA=
 filippo.io/edwards25519 v1.1.0/go.mod h1:BxyFTGdWcka3PhytdK4V28tE5sGfRvvvRV7EaN4VDT4=
-github.com/Abraxas-365/toolkit v1.0.7 h1:zfmBpJGqADYCefbuWaNHZal6U0bhWf19eIr4DQlegvI=
-github.com/Abraxas-365/toolkit v1.0.7/go.mod h1:zjVnnvXtd96D43g4+HBbfefSe0Pn/O5Ya6QQZoJYQTA=
+github.com/Abraxas-365/toolkit v1.1.3 h1:APaFinlqVNy1EYJwJbl77MOHm5eGGGqAtYSBa4yi0Sw=
+github.com/Abraxas-365/toolkit v1.1.3/go.mod h1:zjVnnvXtd96D43g4+HBbfefSe0Pn/O5Ya6QQZoJYQTA=
 github.com/andybalholm/brotli v1.0.5 h1:8uQZIdzKmjc/iuPu7O2ioW48L81FgatrcpfFmiq/cCs=
 github.com/andybalholm/brotli v1.0.5/go.mod h1:fO7iG3H7G2nSZ7m0zPUDn85XEX2GTukHGRSepvi9Eig=
 github.com/aws/aws-sdk-go v1.55.5 h1:KKUZBfBoyqy5d3swXyiC7Q76ic40rYcbqH7qjh59kzU=

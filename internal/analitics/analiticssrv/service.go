@@ -1,18 +1,26 @@
 package analiticssrv
 
 import (
+	"bytes"
 	"context"
+	"encoding/csv"
 	"time"
 
 	"github.com/Abraxas-365/opd/internal/analitics"
+	"github.com/Abraxas-365/toolkit/pkg/errors"
+	"github.com/Abraxas-365/toolkit/pkg/s3client"
 )
 
 type Service struct {
-	repo analitics.Repository
+	repo     analitics.Repository
+	s3Client s3client.Client
 }
 
-func NewService(repo analitics.Repository) *Service {
-	return &Service{repo: repo}
+func NewService(repo analitics.Repository, s3Client s3client.Client) *Service {
+	return &Service{
+		repo:     repo,
+		s3Client: s3Client,
+	}
 }
 
 func (s Service) GetAllAnalitics(ctx context.Context, startDate *time.Time, endDate *time.Time) ([]analitics.Statistic, error) {
@@ -55,4 +63,107 @@ func (s Service) GetDailyInteractionsInRange(ctx context.Context, startDate, end
 	end := time.Date(endDate.Year(), endDate.Month(), endDate.Day(), 23, 59, 59, 999999999, time.UTC)
 
 	return s.repo.GetDailyInteractions(ctx, start, end)
+}
+
+func (s Service) ExportDatabaseToCSV(ctx context.Context, startDate, endDate *time.Time) (string, error) {
+	var start, end time.Time
+	if startDate != nil && endDate != nil {
+		start = time.Date(startDate.Year(), startDate.Month(), startDate.Day(), 0, 0, 0, 0, time.UTC)
+		end = time.Date(endDate.Year(), endDate.Month(), endDate.Day(), 23, 59, 59, 999999999, time.UTC)
+	}
+
+	chatUsers, err := s.repo.GetAllChatUsers(ctx, startDate, endDate)
+	if err != nil {
+		return "", err
+	}
+
+	interactions, err := s.repo.GetAllInteractionsData(ctx, startDate, endDate)
+	if err != nil {
+		return "", err
+	}
+
+	files, err := s.repo.GetAllFiles(ctx, startDate, endDate)
+	if err != nil {
+		return "", err
+	}
+
+	var buffer bytes.Buffer
+	writer := csv.NewWriter(&buffer)
+
+	// Write date range information
+	if startDate != nil && endDate != nil {
+		writer.Write([]string{"Date Range:", "From " + start.Format("2006-01-02") + " To " + end.Format("2006-01-02")})
+	} else {
+		writer.Write([]string{"Date Range:", "Complete Database"})
+	}
+	writer.Write([]string{""})
+
+	// Write Chat Users
+	writer.Write([]string{"=== Chat Users ===", "ID", "Age", "Gender", "Occupation", "Location"})
+	for _, chatUser := range chatUsers {
+		id := ""
+		if chatUser.ID != nil {
+			id = *chatUser.ID
+		}
+		writer.Write([]string{
+			id,
+			string(rune(chatUser.Age)),
+			chatUser.Gender,
+			chatUser.Ocupation,
+			chatUser.Location,
+		})
+	}
+
+	writer.Write([]string{""})
+
+	// Write Interactions
+	writer.Write([]string{"=== Interactions ===", "ID", "User Chat ID", "Context Interaction"})
+	for _, interaction := range interactions {
+		writer.Write([]string{
+			string(rune(interaction.ID)),
+			interaction.UserChatID,
+			string(rune(len(interaction.ContextInteraction))), // Consider how you want to format this array
+		})
+	}
+
+	writer.Write([]string{""})
+
+	// Write Files
+	writer.Write([]string{"=== Files ===", "ID", "Filename", "S3 Key", "User ID", "User Email"})
+	for _, file := range files {
+		writer.Write([]string{
+			string(rune(file.ID)),
+			file.Filename,
+			file.S3Key,
+			file.UserID,
+			file.UserEmail,
+		})
+	}
+
+	writer.Flush()
+
+	if err := writer.Error(); err != nil {
+		return "", errors.ErrUnexpected("error writing CSV: " + err.Error())
+	}
+
+	// Generate filename
+	filenamePrefix := "complete"
+	if startDate != nil && endDate != nil {
+		filenamePrefix = start.Format("2006-01-02") + "_to_" + end.Format("2006-01-02")
+	}
+	filename := "exports/database_export_" + filenamePrefix + "_" + time.Now().Format("150405") + ".csv"
+
+	// Upload to S3
+	err = s.s3Client.UploadCSV(ctx, filename, buffer.Bytes())
+	if err != nil {
+		return "", errors.ErrServiceUnavailable("failed to upload to S3: " + err.Error())
+	}
+
+	// Generate presigned URL
+	presignedURL, err := s.s3Client.GeneratePresignedGetURL(filename, 24*time.Hour)
+	if err != nil {
+		return "", errors.ErrServiceUnavailable("failed to generate presigned URL: " + err.Error())
+	}
+
+	return presignedURL, nil
 }

@@ -7,6 +7,9 @@ import (
 	"time"
 
 	"github.com/Abraxas-365/opd/internal/analitics"
+	"github.com/Abraxas-365/opd/internal/chatuser"
+	"github.com/Abraxas-365/opd/internal/interaction"
+	"github.com/Abraxas-365/opd/internal/kb"
 	"github.com/Abraxas-365/toolkit/pkg/errors"
 	"github.com/jmoiron/sqlx"
 )
@@ -194,4 +197,131 @@ func (s *PostgresStore) GetDailyInteractions(ctx context.Context, startDate, end
 	}
 
 	return stats, nil
+}
+
+func (r *PostgresStore) GetAllChatUsers(ctx context.Context, startDate, endDate *time.Time) ([]chatuser.ChatUser, error) {
+	query := `SELECT id, age, gender, occupation, location 
+              FROM chatUser`
+
+	var args []interface{}
+	if startDate != nil && endDate != nil {
+		query += ` WHERE created_at BETWEEN $1 AND $2`
+		args = append(args, startDate, endDate)
+	}
+
+	rows, err := r.db.QueryContext(ctx, query, args...)
+	if err != nil {
+		return nil, errors.ErrDatabase("failed to query chat users: " + err.Error())
+	}
+	defer rows.Close()
+
+	var chatUsers []chatuser.ChatUser
+	for rows.Next() {
+		var chatUser chatuser.ChatUser
+		err := rows.Scan(
+			&chatUser.ID,
+			&chatUser.Age,
+			&chatUser.Gender,
+			&chatUser.Ocupation,
+			&chatUser.Location,
+		)
+		if err != nil {
+			return nil, errors.ErrDatabase("failed to scan chat user data: " + err.Error())
+		}
+		chatUsers = append(chatUsers, chatUser)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, errors.ErrDatabase("error iterating chat users: " + err.Error())
+	}
+
+	if len(chatUsers) == 0 {
+		return nil, errors.ErrNotFound("no chat users found for the specified criteria")
+	}
+
+	return chatUsers, nil
+}
+
+func (r *PostgresStore) GetAllInteractionsData(ctx context.Context, startDate, endDate *time.Time) ([]interaction.Interaction, error) {
+	query := `SELECT id, user_chat_id, context_interaction 
+              FROM interactions`
+
+	var args []interface{}
+	if startDate != nil && endDate != nil {
+		query += ` WHERE created_at BETWEEN $1 AND $2`
+		args = append(args, startDate, endDate)
+	}
+
+	rows, err := r.db.QueryContext(ctx, query, args...)
+	if err != nil {
+		return nil, errors.ErrDatabase("failed to query interactions: " + err.Error())
+	}
+	defer rows.Close()
+
+	var interactions []interaction.Interaction
+	for rows.Next() {
+		var interaction interaction.Interaction
+		err := rows.Scan(
+			&interaction.ID,
+			&interaction.UserChatID,
+			&interaction.ContextInteraction,
+		)
+		if err != nil {
+			return nil, errors.ErrDatabase("failed to scan interaction data: " + err.Error())
+		}
+		interactions = append(interactions, interaction)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, errors.ErrDatabase("error iterating interactions: " + err.Error())
+	}
+
+	if len(interactions) == 0 {
+		return nil, errors.ErrNotFound("no interactions found for the specified criteria")
+	}
+
+	return interactions, nil
+}
+
+func (r *PostgresStore) GetAllFiles(ctx context.Context, startDate, endDate *time.Time) ([]kb.DataFile, error) {
+	query := `SELECT id, filename, s3_key, user_id, user_email 
+              FROM files`
+
+	var args []interface{}
+	if startDate != nil && endDate != nil {
+		query += ` WHERE created_at BETWEEN $1 AND $2`
+		args = append(args, startDate, endDate)
+	}
+
+	rows, err := r.db.QueryContext(ctx, query, args...)
+	if err != nil {
+		return nil, errors.ErrDatabase("failed to query files: " + err.Error())
+	}
+	defer rows.Close()
+
+	var files []kb.DataFile
+	for rows.Next() {
+		var file kb.DataFile
+		err := rows.Scan(
+			&file.ID,
+			&file.Filename,
+			&file.S3Key,
+			&file.UserID,
+			&file.UserEmail,
+		)
+		if err != nil {
+			return nil, errors.ErrDatabase("failed to scan file data: " + err.Error())
+		}
+		files = append(files, file)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, errors.ErrDatabase("error iterating files: " + err.Error())
+	}
+
+	if len(files) == 0 {
+		return nil, errors.ErrNotFound("no files found for the specified criteria")
+	}
+
+	return files, nil
 }
