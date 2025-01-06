@@ -144,7 +144,7 @@ func SetupRoutes(app *fiber.App, service *usersrv.Service, authMiddleware *lucia
 		return c.SendStatus(fiber.StatusOK)
 	})
 
-	app.Delete("/users/whitelist", authMiddleware.RequireAuth(), func(c *fiber.Ctx) error {
+	app.Delete("/users/d/whitelist", authMiddleware.RequireAuth(), func(c *fiber.Ctx) error {
 		type Request struct {
 			Email string `json:"email"`
 		}
