@@ -12,6 +12,7 @@ import (
 	"github.com/Abraxas-365/opd/internal/kb"
 	"github.com/Abraxas-365/toolkit/pkg/errors"
 	"github.com/jmoiron/sqlx"
+	"github.com/lib/pq"
 )
 
 type PostgresStore struct {
@@ -243,7 +244,7 @@ func (r *PostgresStore) GetAllChatUsers(ctx context.Context, startDate, endDate 
 }
 
 func (r *PostgresStore) GetAllInteractionsData(ctx context.Context, startDate, endDate *time.Time) ([]interaction.Interaction, error) {
-	query := `SELECT id, user_chat_id, context_interaction 
+	query := `SELECT id, user_chat_id, COALESCE(context_interaction, '{}') AS context_interaction 
               FROM interactions`
 
 	var args []interface{}
@@ -264,7 +265,7 @@ func (r *PostgresStore) GetAllInteractionsData(ctx context.Context, startDate, e
 		err := rows.Scan(
 			&interaction.ID,
 			&interaction.UserChatID,
-			&interaction.ContextInteraction,
+			pq.Array(&interaction.ContextInteraction), // Manejo de arreglos con pq.Array
 		)
 		if err != nil {
 			return nil, errors.ErrDatabase("failed to scan interaction data: " + err.Error())
