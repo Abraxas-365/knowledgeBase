@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/csv"
+	"strconv"
 	"time"
 
 	"github.com/Abraxas-365/opd/internal/analitics"
@@ -90,16 +91,8 @@ func (s Service) ExportDatabaseToCSV(ctx context.Context, startDate, endDate *ti
 	var buffer bytes.Buffer
 	writer := csv.NewWriter(&buffer)
 
-	// Write date range information
-	if startDate != nil && endDate != nil {
-		writer.Write([]string{"Date Range:", "From " + start.Format("2006-01-02") + " To " + end.Format("2006-01-02")})
-	} else {
-		writer.Write([]string{"Date Range:", "Complete Database"})
-	}
-	writer.Write([]string{""})
-
 	// Write Chat Users
-	writer.Write([]string{"=== Chat Users ===", "ID", "Age", "Gender", "Occupation", "Location"})
+	writer.Write([]string{"ID", "Age", "Gender", "Occupation", "Location"})
 	for _, chatUser := range chatUsers {
 		id := ""
 		if chatUser.ID != nil {
@@ -107,7 +100,7 @@ func (s Service) ExportDatabaseToCSV(ctx context.Context, startDate, endDate *ti
 		}
 		writer.Write([]string{
 			id,
-			string(rune(chatUser.Age)),
+			strconv.Itoa(chatUser.Age),
 			chatUser.Gender,
 			chatUser.Ocupation,
 			chatUser.Location,
@@ -117,19 +110,19 @@ func (s Service) ExportDatabaseToCSV(ctx context.Context, startDate, endDate *ti
 	writer.Write([]string{""})
 
 	// Write Interactions
-	writer.Write([]string{"=== Interactions ===", "ID", "User Chat ID", "Context Interaction"})
+	writer.Write([]string{"ID", "User Chat ID", "Context Interaction Amount"})
 	for _, interaction := range interactions {
 		writer.Write([]string{
-			string(rune(interaction.ID)),
+			strconv.Itoa(interaction.ID),
 			interaction.UserChatID,
-			string(rune(len(interaction.ContextInteraction))), // Consider how you want to format this array
+			strconv.Itoa(len(interaction.ContextInteraction)),
 		})
 	}
 
 	writer.Write([]string{""})
 
 	// Write Files
-	writer.Write([]string{"=== Files ===", "ID", "Filename", "S3 Key", "User ID", "User Email"})
+	writer.Write([]string{"ID", "Filename", "S3 Key", "User ID", "User Email"})
 	for _, file := range files {
 		writer.Write([]string{
 			string(rune(file.ID)),

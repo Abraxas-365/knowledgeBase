@@ -1,6 +1,7 @@
 package analiticsapi
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/Abraxas-365/opd/internal/analitics/analiticssrv"
@@ -194,6 +195,7 @@ func getDailyInteractions(service *analiticssrv.Service) fiber.Handler {
 }
 
 func exportDatabase(service *analiticssrv.Service) fiber.Handler {
+	fmt.Println("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")
 	return func(c *fiber.Ctx) error {
 		// Parse query parameters for date range
 		startDateStr := c.Query("start_date")
@@ -243,6 +245,7 @@ func exportDatabase(service *analiticssrv.Service) fiber.Handler {
 					"error": err.Error(),
 				})
 			case errors.IsDatabaseError(err):
+				fmt.Println(err)
 				return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 					"error": "Database error occurred",
 				})
